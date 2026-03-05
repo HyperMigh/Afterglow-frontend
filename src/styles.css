@@ -62,7 +62,23 @@ a {
   font-size: 14px;
 }
 
+.link-btn {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
 .links a.router-link-active {
+  border-color: rgba(255, 186, 205, 0.85);
+  color: #ffd3e7;
+  background: rgba(255, 179, 225, 0.18);
+}
+
+.link-btn:hover {
   border-color: rgba(255, 186, 205, 0.85);
   color: #ffd3e7;
   background: rgba(255, 179, 225, 0.18);
@@ -126,6 +142,12 @@ h1 {
   cursor: not-allowed;
 }
 
+.btn-primary.ghost {
+  background: transparent;
+  color: #e7efff;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+}
+
 .grid {
   display: grid;
   gap: 14px;
@@ -174,6 +196,41 @@ h1 {
 
 .todo-list li + li {
   margin-top: 8px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field span {
+  font-size: 13px;
+  color: rgba(238, 244, 255, 0.9);
+}
+
+.field input {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #eef4ff;
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+.field input:focus {
+  border-color: rgba(255, 196, 222, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 196, 222, 0.2);
+}
+
+.row-actions {
+  display: flex;
+  gap: 10px;
 }
 
 @media (max-width: 960px) {

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { fetchBackendHealth, fetchHomeGreeting } from "../api/client";
+import { fetchBackendHealth, fetchHomeGreeting } from "../api/modules/system";
 
 export const useSystemStore = defineStore("system", {
   state: () => ({

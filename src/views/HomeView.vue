@@ -2,12 +2,22 @@
 import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useSystemStore } from "../stores/system";
+import { useAuthStore } from "../stores/auth";
 
 const systemStore = useSystemStore();
+const authStore = useAuthStore();
 const { health, greeting, loading, error } = storeToRefs(systemStore);
+const { me, isAuthenticated: authed } = storeToRefs(authStore);
 
-onMounted(() => {
+onMounted(async () => {
   systemStore.loadSystemStatus();
+  if (authStore.isAuthenticated && !authStore.me) {
+    try {
+      await authStore.loadMe();
+    } catch (e) {
+      // no-op: auth store already handled invalid token
+    }
+  }
 });
 </script>
 
@@ -26,6 +36,12 @@ onMounted(() => {
   </section>
 
   <section class="grid">
+    <article class="panel">
+      <h2>登录状态</h2>
+      <p class="muted" v-if="!authed">当前未登录。可前往登录页完成邮箱验证码登录。</p>
+      <pre v-else class="json">{{ me ? JSON.stringify(me, null, 2) : "已登录，正在拉取用户信息..." }}</pre>
+    </article>
+
     <article class="panel">
       <h2>后端健康状态</h2>
       <p v-if="loading" class="muted">正在请求 /api/health ...</p>

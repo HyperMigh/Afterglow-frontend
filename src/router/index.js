@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import RoadmapView from "../views/RoadmapView.vue";
+import LoginView from "../views/LoginView.vue";
+import { getStoredAccessToken } from "../api/client";
 
 const routes = [
   {
@@ -11,11 +13,37 @@ const routes = [
   {
     path: "/roadmap",
     name: "roadmap",
-    component: RoadmapView
+    component: RoadmapView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: LoginView
   }
 ];
 
 export const router = createRouter({
   history: createWebHistory(),
   routes
+});
+
+router.beforeEach((to) => {
+  const hasToken = Boolean(getStoredAccessToken());
+  if (to.meta.requiresAuth && !hasToken) {
+    return {
+      name: "login",
+      query: {
+        redirect: to.fullPath
+      }
+    };
+  }
+  if (to.name === "login" && hasToken) {
+    return {
+      name: "home"
+    };
+  }
+  return true;
 });
