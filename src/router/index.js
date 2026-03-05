@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import RoadmapView from "../views/RoadmapView.vue";
-import LoginView from "../views/LoginView.vue";
+import AuthPortalView from "../views/AuthPortalView.vue";
 import FeedView from "../views/FeedView.vue";
 import ChatView from "../views/ChatView.vue";
 import MirrorView from "../views/MirrorView.vue";
@@ -51,7 +51,24 @@ const routes = [
   {
     path: "/login",
     name: "login",
-    component: LoginView
+    component: AuthPortalView,
+    meta: {
+      layout: "auth"
+    },
+    props: {
+      scene: "login"
+    }
+  },
+  {
+    path: "/register",
+    name: "register",
+    component: AuthPortalView,
+    meta: {
+      layout: "auth"
+    },
+    props: {
+      scene: "register"
+    }
   }
 ];
 
@@ -70,7 +87,7 @@ router.beforeEach((to) => {
       }
     };
   }
-  if (to.name === "login" && hasToken) {
+  if ((to.name === "login" || to.name === "register") && hasToken) {
     return {
       name: "feed"
     };

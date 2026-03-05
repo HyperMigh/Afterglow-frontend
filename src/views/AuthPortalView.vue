@@ -1,17 +1,12 @@
-﻿<script setup>
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import { useRouter, useRoute } from "vue-router";
+<script setup>
+import { computed, onUnmounted, reactive, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../stores/auth";
 import UiButton from "../components/ui/UiButton.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import UiInput from "../components/ui/UiInput.vue";
 import UiStatus from "../components/ui/UiStatus.vue";
-
-const authStore = useAuthStore();
-const { isAuthenticated, me, sendingCode, loggingIn, registering } = storeToRefs(authStore);
-const router = useRouter();
-const route = useRoute();
 
 const props = defineProps({
   scene: {
@@ -20,6 +15,11 @@ const props = defineProps({
     validator: (value) => ["login", "register"].includes(value)
   }
 });
+
+const authStore = useAuthStore();
+const { sendingCode, loggingIn, registering } = storeToRefs(authStore);
+const router = useRouter();
+const route = useRoute();
 
 const form = reactive({
   email: "",
@@ -41,26 +41,6 @@ const feedback = reactive({
 const cooldown = ref(0);
 let cooldownTimer = null;
 
-const inspirationTracks = [
-  {
-    id: "01",
-    title: "双重验证",
-    description: "登录和注册都要通过图形验证码 + 邮箱验证码，防止批量请求和撞库。"
-  },
-  {
-    id: "02",
-    title: "注册登录分离",
-    description: "注册仅允许新邮箱，登录仅允许已注册邮箱，不再自动建号。"
-  },
-  {
-    id: "03",
-    title: "全链路鉴权",
-    description: "除认证接口外，其余 API 均要求携带有效登录令牌。"
-  }
-];
-
-const inspirationTags = ["Captcha", "Email OTP", "Register", "Login", "Token Guard", "Security"];
-
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_PATTERN = /^\d{4,8}$/;
 const CAPTCHA_PATTERN = /^[A-Za-z0-9]{4,8}$/;
@@ -73,13 +53,6 @@ const submitLoading = computed(() => (isLoginMode.value ? loggingIn.value : regi
 const canSendCode = computed(() => cooldown.value <= 0 && !sendingCode.value);
 const canSubmit = computed(() => isEmailValid.value && isCodeValid.value && isCaptchaValid.value && !submitLoading.value);
 const feedbackTone = computed(() => (feedback.message ? feedback.type : "muted"));
-const authSwitchTarget = computed(() => (isLoginMode.value ? "/register" : "/login"));
-const authSwitchText = computed(() => (isLoginMode.value ? "去注册" : "去登录"));
-const authSwitchHint = computed(() => (isLoginMode.value ? "没有账号？" : "已有账号？"));
-const defaultFeedbackText = computed(() =>
-  isLoginMode.value ? "请先获取邮箱验证码，再输入图形验证码完成登录。" : "请先获取邮箱验证码，再输入图形验证码完成注册。"
-);
-
 const sendCodeButtonText = computed(() => {
   if (sendingCode.value) {
     return "发送中...";
@@ -89,19 +62,20 @@ const sendCodeButtonText = computed(() => {
   }
   return "获取邮箱验证码";
 });
-
 const submitButtonText = computed(() => {
   if (submitLoading.value) {
     return isLoginMode.value ? "登录中..." : "注册中...";
   }
-  return isLoginMode.value ? "立即登录" : "立即注册";
+  return isLoginMode.value ? "登录" : "注册";
 });
-
-const headTitle = computed(() => (isLoginMode.value ? "欢迎登录" : "创建账号"));
+const headTitle = computed(() => (isLoginMode.value ? "登录账号" : "创建账号"));
 const headDesc = computed(() =>
   isLoginMode.value
-    ? "请输入邮箱验证码与图形验证码，验证通过后进入系统。"
-    : "先获取并填写邮箱验证码，再输入图形验证码完成注册。"
+    ? "输入邮箱验证码与图形验证码后登录。"
+    : "先获取邮箱验证码，再输入图形验证码完成注册。"
+);
+const defaultFeedbackText = computed(() =>
+  isLoginMode.value ? "请先获取邮箱验证码，再输入图形验证码完成登录。" : "请先获取邮箱验证码，再输入图形验证码完成注册。"
 );
 
 function setFeedback(type, message) {
@@ -130,7 +104,7 @@ function normalizeRedirect() {
   if (typeof redirect === "string" && redirect.startsWith("/")) {
     return redirect;
   }
-  return "/";
+  return "/feed";
 }
 
 async function refreshCaptcha() {
@@ -212,21 +186,6 @@ async function onSubmit() {
   }
 }
 
-function onLogout() {
-  authStore.logout();
-  setFeedback("info", "已退出登录");
-}
-
-async function ensureMe() {
-  if (authStore.isAuthenticated && !authStore.me) {
-    try {
-      await authStore.loadMe();
-    } catch (error) {
-      setFeedback("error", authStore.error || error.message || "获取用户信息失败");
-    }
-  }
-}
-
 watch(
   () => props.scene,
   async () => {
@@ -234,10 +193,6 @@ watch(
   },
   { immediate: true }
 );
-
-onMounted(async () => {
-  await ensureMe();
-});
 
 onUnmounted(() => {
   if (cooldownTimer) {
@@ -248,36 +203,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="login-stage">
-    <UiCard as="article" variant="panel" class="story-panel reveal reveal-1">
-      <p class="story-kicker">Afterglow Access</p>
-      <h1>登录与注册统一升级为邮箱 + 图形验证码双重验证</h1>
-      <p class="story-subtitle">
-        认证模块现在分离登录和注册流程，前后端都加入图形验证码校验，并对全部业务接口启用登录态拦截。
-      </p>
-
-      <ul class="story-list">
-        <li v-for="track in inspirationTracks" :key="track.id" class="story-item">
-          <span class="item-id">{{ track.id }}</span>
-          <div>
-            <h3>{{ track.title }}</h3>
-            <p>{{ track.description }}</p>
-          </div>
-        </li>
-      </ul>
-
-      <div class="tag-row">
-        <span v-for="tag in inspirationTags" :key="tag" class="tag-pill">{{ tag }}</span>
-      </div>
-    </UiCard>
-
-    <UiCard as="article" variant="panel" class="auth-panel reveal reveal-2">
+  <section class="auth-page">
+    <UiCard as="article" variant="panel" class="auth-modal">
       <header class="auth-head">
-        <div class="auth-head-row">
-          <p class="head-badge">Email + Captcha</p>
-          <RouterLink :to="authSwitchTarget" class="auth-switch-link">{{ authSwitchHint }}{{ authSwitchText }}</RouterLink>
+        <div class="mode-tabs" role="tablist" aria-label="认证模式">
+          <RouterLink to="/login" class="mode-tab" :class="{ active: isLoginMode }">登录</RouterLink>
+          <RouterLink to="/register" class="mode-tab" :class="{ active: !isLoginMode }">注册</RouterLink>
         </div>
-        <h2>{{ headTitle }}</h2>
+        <h1>{{ headTitle }}</h1>
         <p>{{ headDesc }}</p>
       </header>
 
@@ -292,9 +225,6 @@ onUnmounted(() => {
             autocomplete="email"
             @update:model-value="(value) => (form.email = value)"
           />
-          <small class="input-tip" :class="{ error: form.email && !isEmailValid }">
-            {{ form.email && !isEmailValid ? "邮箱格式不正确" : "邮箱用于发送验证码" }}
-          </small>
         </label>
 
         <label class="input-group">
@@ -331,13 +261,6 @@ onUnmounted(() => {
               <span v-else class="captcha-fallback">点击获取</span>
             </button>
           </div>
-          <small class="input-tip" :class="{ error: form.captchaCode && !isCaptchaValid }">
-            {{
-              form.captchaCode && !isCaptchaValid
-                ? "图形验证码应为 4~8 位字母数字"
-                : `看不清可点击图片刷新${captcha.expireSeconds ? `（${captcha.expireSeconds}s 过期）` : ""}`
-            }}
-          </small>
         </label>
 
         <UiButton class="submit-btn" type="submit" :disabled="!canSubmit">
@@ -348,167 +271,36 @@ onUnmounted(() => {
       <UiStatus class="feedback-text" :tone="feedbackTone">
         {{ feedback.message || defaultFeedbackText }}
       </UiStatus>
-
-      <div v-if="isAuthenticated" class="user-card">
-        <p class="user-title">当前登录状态</p>
-        <p><strong>ID</strong><span>{{ me?.id || "-" }}</span></p>
-        <p><strong>邮箱</strong><span>{{ me?.email || "-" }}</span></p>
-        <p><strong>昵称</strong><span>{{ me?.nickname || "-" }}</span></p>
-        <div class="action-row">
-          <UiButton type="button" variant="ghost" size="sm" class="secondary-btn" @click="router.push('/')">进入系统</UiButton>
-          <UiButton type="button" variant="ghost" size="sm" class="secondary-btn" @click="onLogout">退出登录</UiButton>
-        </div>
-      </div>
     </UiCard>
   </section>
 </template>
 
 <style scoped>
-.login-stage {
+.auth-page {
+  min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(320px, 1.15fr) minmax(320px, 0.85fr);
-  gap: 18px;
+  place-items: center;
+  padding: 24px 14px;
 }
 
-.story-panel,
-.auth-panel {
-  position: relative;
-  overflow: hidden;
+.auth-modal {
+  width: min(520px, 94vw);
   border-radius: 28px;
   border: 1px solid var(--ag-border-strong);
   box-shadow: var(--ag-shadow-panel);
-}
-
-.story-panel {
-  padding: 28px;
-  background: var(--ag-login-story-bg, var(--ag-surface-hero));
-}
-
-.story-panel::after {
-  content: "";
-  position: absolute;
-  right: -60px;
-  bottom: -90px;
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  border: 1px dashed var(--ag-border-soft);
-}
-
-.story-kicker {
-  margin: 0;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  font-size: 12px;
-  color: var(--ag-eyebrow);
-}
-
-.story-panel h1 {
-  margin: 10px 0 14px;
-  font-size: clamp(28px, 4.2vw, 44px);
-  line-height: 1.15;
-  max-width: 12em;
-}
-
-.story-subtitle {
-  margin: 0;
-  max-width: 32em;
-  color: var(--ag-text-soft);
-}
-
-.story-list {
-  margin: 22px 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 12px;
-}
-
-.story-item {
-  display: grid;
-  grid-template-columns: 54px 1fr;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 15px;
-  border: 1px solid var(--ag-border-soft);
-  background: var(--ag-btn-ghost-bg);
-  border-left: 2px solid rgba(230, 0, 8, 0.58);
-}
-
-.item-id {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  border-radius: 999px;
-  font-weight: 700;
-  color: #ffffff;
-  background: linear-gradient(140deg, #ff6d4c, #e60008);
-}
-
-.story-item h3 {
-  margin: 0;
-  font-size: 20px;
-  text-transform: uppercase;
-  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
-}
-
-.story-item p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: var(--ag-text-muted);
-}
-
-.tag-row {
-  margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag-pill {
-  font-size: 12px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(230, 0, 8, 0.35);
-  background: rgba(230, 0, 8, 0.13);
-  color: var(--ag-text-strong);
-}
-
-.auth-panel {
-  padding: 26px 24px;
   background: var(--ag-login-auth-bg, var(--ag-surface-panel));
+  padding: 24px;
 }
 
-.auth-head-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.auth-head {
+  display: grid;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
-.auth-switch-link {
-  font-size: 13px;
-  color: var(--ag-link);
-  text-decoration: underline;
-}
-
-.auth-switch-link:hover {
-  color: var(--ag-text-strong);
-}
-
-.head-badge {
+.auth-head h1 {
   margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ag-eyebrow);
-}
-
-.auth-head h2 {
-  margin: 8px 0 10px;
   font-size: 40px;
+  line-height: 1;
   text-transform: uppercase;
   font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
 }
@@ -516,10 +308,33 @@ onUnmounted(() => {
 .auth-head p {
   margin: 0;
   color: var(--ag-text-soft);
+  font-size: 14px;
+}
+
+.mode-tabs {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid var(--ag-border-soft);
+  overflow: hidden;
+  width: fit-content;
+}
+
+.mode-tab {
+  border: none;
+  padding: 6px 14px;
+  color: var(--ag-text-soft);
+  font-size: 15px;
+  text-transform: uppercase;
+  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
+}
+
+.mode-tab.active {
+  color: #ffffff;
+  background: linear-gradient(140deg, #ff6d4c, #e60008);
 }
 
 .auth-form {
-  margin-top: 18px;
+  margin-top: 16px;
   display: grid;
   gap: 13px;
 }
@@ -574,103 +389,19 @@ onUnmounted(() => {
   font-size: 12px;
 }
 
-.input-tip {
-  margin: 0;
-  font-size: 12px;
-  color: var(--ag-text-muted);
-}
-
-.input-tip.error {
-  color: var(--ag-danger-text);
-}
-
 .submit-btn {
-  margin-top: 2px;
   padding: 12px 16px;
   font-size: 15px;
 }
 
 .feedback-text {
-  margin: 14px 0 0;
-}
-
-.user-card {
-  margin-top: 14px;
-  padding: 12px;
-  border-radius: 14px;
-  border: 1px solid var(--ag-border-soft);
-  background: var(--ag-btn-ghost-bg);
-  border-left: 2px solid rgba(230, 0, 8, 0.58);
-}
-
-.user-title {
-  margin: 0 0 8px;
-  font-size: 13px;
-  color: var(--ag-text-soft);
-}
-
-.user-card p {
-  margin: 6px 0;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 13px;
-}
-
-.user-card strong {
-  font-weight: 600;
-  color: var(--ag-text-soft);
-}
-
-.action-row {
   margin-top: 12px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.secondary-btn {
-  border-radius: 999px;
-}
-
-.reveal {
-  animation: rise-up 0.55s ease both;
-}
-
-.reveal-2 {
-  animation-delay: 0.08s;
-}
-
-@keyframes rise-up {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 980px) {
-  .login-stage {
-    grid-template-columns: 1fr;
-  }
-
-  .story-panel,
-  .auth-panel {
-    border-radius: 20px;
-  }
-
-  .story-panel h1 {
-    max-width: none;
-  }
 }
 
 @media (max-width: 640px) {
-  .story-panel,
-  .auth-panel {
-    padding: 20px 18px;
+  .auth-modal {
+    padding: 20px 16px;
+    border-radius: 20px;
   }
 
   .code-line,

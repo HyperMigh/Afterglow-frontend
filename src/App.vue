@@ -1,5 +1,5 @@
-<script setup>
-import { RouterLink, RouterView } from "vue-router";
+﻿<script setup>
+import { RouterLink, RouterView, useRoute } from "vue-router";
 import { computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "./stores/auth";
@@ -7,9 +7,11 @@ import { useThemeStore } from "./stores/theme";
 
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
+const route = useRoute();
 const { theme } = storeToRefs(themeStore);
 
 const themeButtonText = computed(() => (theme.value === "dark" ? "切换浅色" : "切换深色"));
+const isAuthLayout = computed(() => route.meta.layout === "auth");
 
 onMounted(async () => {
   themeStore.initializeTheme();
@@ -25,7 +27,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="app-shell">
+  <div v-if="isAuthLayout" class="auth-layout-shell">
+    <RouterView />
+  </div>
+
+  <div v-else class="app-shell">
     <header class="top-nav">
       <RouterLink to="/" class="brand">
         <span class="brand-mark">AG</span>
@@ -41,7 +47,6 @@ onMounted(async () => {
         <RouterLink to="/chat" class="nav-link">私聊</RouterLink>
         <RouterLink to="/mirror" class="nav-link">静一下</RouterLink>
         <RouterLink to="/roadmap" class="nav-link">开发路线</RouterLink>
-        <RouterLink to="/login" class="nav-link">登录</RouterLink>
       </nav>
 
       <nav class="nav-right" aria-label="账号操作">
@@ -52,7 +57,7 @@ onMounted(async () => {
         <span v-else class="user-pill muted-pill">访客模式</span>
 
         <button v-if="authStore.isAuthenticated" class="link-btn" @click="authStore.logout">退出</button>
-        <RouterLink v-else to="/login" class="link-btn cta-btn">立即登录</RouterLink>
+        <RouterLink v-else to="/login" class="link-btn cta-btn">登录</RouterLink>
       </nav>
     </header>
 
@@ -61,3 +66,10 @@ onMounted(async () => {
     </main>
   </div>
 </template>
+
+<style scoped>
+.auth-layout-shell {
+  min-height: 100vh;
+}
+</style>
+
