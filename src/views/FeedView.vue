@@ -3,6 +3,10 @@ import { computed, onMounted, reactive } from "vue";
 import { storeToRefs } from "pinia";
 import { useFeedStore } from "../stores/feed";
 import { useReportStore } from "../stores/report";
+import UiButton from "../components/ui/UiButton.vue";
+import UiCard from "../components/ui/UiCard.vue";
+import UiInput from "../components/ui/UiInput.vue";
+import UiStatus from "../components/ui/UiStatus.vue";
 
 const feedStore = useFeedStore();
 const reportStore = useReportStore();
@@ -21,6 +25,9 @@ const reportFormMap = reactive({});
 
 const contentLength = computed(() => composer.content.trim().length);
 const canPublish = computed(() => contentLength.value > 0 && contentLength.value <= 2000 && !publishing.value);
+const postCount = computed(() => posts.value.length);
+const totalLikeCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.likeCount || 0), 0));
+const totalCommentCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.commentCount || 0), 0));
 
 function formatDateTime(value) {
   if (!value) {
@@ -125,10 +132,6 @@ async function onToggleComments(postId) {
   }
 }
 
-function onChangeCommentDraft(postId, event) {
-  feedStore.setCommentDraft(postId, event.target.value);
-}
-
 async function onSubmitComment(postId) {
   await feedStore.submitComment(postId);
 }
@@ -143,61 +146,82 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="hero-card compact">
+  <UiCard variant="hero" compact class="feed-hero">
     <p class="eyebrow">M2 Feed</p>
-    <h1>社区时间线（初版）</h1>
+    <h1>社区时间线</h1>
     <p class="subtitle">
-      已接入发帖、评论、点赞、删除和游标分页。当前为内存实现，重启后数据会重置。
+      已接入发帖、评论、点赞、举报和游标分页。当前阶段重点是提升交互连贯性与信息可读性。
     </p>
-  </section>
+    <div class="feed-stats">
+      <span class="feed-stat">帖子 {{ postCount }}</span>
+      <span class="feed-stat">点赞 {{ totalLikeCount }}</span>
+      <span class="feed-stat">评论 {{ totalCommentCount }}</span>
+      <span class="feed-stat">{{ hasMore ? "支持继续加载" : "已到末尾" }}</span>
+    </div>
+  </UiCard>
 
   <section class="grid single">
-    <article class="panel">
-      <h2>发布帖子</h2>
+    <UiCard as="article" variant="panel" class="composer-panel">
+      <div class="composer-head">
+        <h2>发布帖子</h2>
+        <p class="muted">表达你的想法、近况或问题，支持附带图片链接。</p>
+      </div>
+
       <div class="form-grid">
         <label class="field">
           <span>内容（最多 2000 字）</span>
-          <textarea
+          <UiInput
+            multiline
             class="textarea"
-            :value="composer.content"
+            :model-value="composer.content"
             placeholder="分享你此刻的想法..."
-            @input="(event) => (composer.content = event.target.value)"
+            @update:model-value="(value) => (composer.content = value)"
           />
-          <small class="hint">{{ contentLength }}/2000</small>
+          <small class="hint" :class="{ error: contentLength > 2000 }">{{ contentLength }}/2000</small>
         </label>
         <label class="field">
           <span>图片 URL（可选，每行一个）</span>
-          <textarea
+          <UiInput
+            multiline
+            :rows="4"
             class="textarea small"
-            :value="composer.mediaRaw"
+            :model-value="composer.mediaRaw"
             placeholder="https://example.com/a.png"
-            @input="(event) => (composer.mediaRaw = event.target.value)"
+            @update:model-value="(value) => (composer.mediaRaw = value)"
           />
         </label>
         <label class="checkbox-line">
-          <input type="checkbox" :checked="composer.isAnonymous" @change="(event) => (composer.isAnonymous = event.target.checked)" />
+          <input
+            type="checkbox"
+            :checked="composer.isAnonymous"
+            @change="(event) => (composer.isAnonymous = event.target.checked)"
+          />
           <span>匿名发布</span>
         </label>
       </div>
       <div class="hero-actions row-actions">
-        <button class="btn-primary" :disabled="!canPublish" @click="onPublishPost">
+        <UiButton :disabled="!canPublish" @click="onPublishPost">
           {{ publishing ? "发布中..." : "发布帖子" }}
-        </button>
-        <button class="btn-primary ghost" :disabled="loading" @click="feedStore.loadFirstPage">
+        </UiButton>
+        <UiButton variant="ghost" :disabled="loading" @click="feedStore.loadFirstPage">
           刷新时间线
-        </button>
+        </UiButton>
       </div>
-    </article>
+    </UiCard>
   </section>
 
   <section class="grid single">
-    <article class="panel">
-      <h2>帖子列表</h2>
-      <p v-if="loading" class="muted">正在加载时间线...</p>
-      <p v-else-if="error" class="error">{{ error }}</p>
-      <p v-else-if="!posts.length" class="muted">还没有帖子，发布第一条内容吧。</p>
+    <UiCard as="article" variant="panel" class="timeline-panel">
+      <div class="timeline-head">
+        <h2>帖子列表</h2>
+        <UiButton variant="text" :disabled="loading" @click="feedStore.loadFirstPage">重新加载</UiButton>
+      </div>
 
-      <div v-for="post in posts" :key="post.postId" class="feed-card">
+      <UiStatus v-if="loading" tone="info">正在加载时间线...</UiStatus>
+      <UiStatus v-else-if="error" tone="error">{{ error }}</UiStatus>
+      <UiStatus v-else-if="!posts.length" tone="muted">还没有帖子，发布第一条内容吧。</UiStatus>
+
+      <div v-for="post in posts" :key="post.postId" class="feed-card timeline-card">
         <header class="feed-card-head">
           <div>
             <div class="feed-author">
@@ -207,7 +231,7 @@ onMounted(async () => {
             </div>
             <small class="muted">{{ formatDateTime(post.createdAt) }}</small>
           </div>
-          <button v-if="post.mine" class="text-btn danger" @click="onDeletePost(post.postId)">删除</button>
+          <UiButton v-if="post.mine" variant="danger" size="sm" @click="onDeletePost(post.postId)">删除</UiButton>
         </header>
 
         <p class="feed-content">{{ post.content }}</p>
@@ -218,20 +242,24 @@ onMounted(async () => {
         </ul>
 
         <div class="feed-actions">
-          <button class="text-btn" @click="onLikePost(post.postId)">点赞 {{ post.likeCount || 0 }}</button>
-          <button class="text-btn" @click="onToggleComments(post.postId)">
+          <UiButton variant="text" size="sm" @click="onLikePost(post.postId)">点赞 {{ post.likeCount || 0 }}</UiButton>
+          <UiButton variant="text" size="sm" @click="onToggleComments(post.postId)">
             {{ isCommentPanelOpen(post.postId) ? "收起评论" : "评论" }} {{ post.commentCount || 0 }}
-          </button>
-          <button class="text-btn" @click="onToggleReport('post', post.postId)">
+          </UiButton>
+          <UiButton variant="text" size="sm" @click="onToggleReport('post', post.postId)">
             {{ isReportPanelOpen("post", post.postId) ? "收起举报" : "举报" }}
-          </button>
+          </UiButton>
         </div>
 
         <div v-if="isReportPanelOpen('post', post.postId)" class="report-panel">
           <div class="form-grid">
             <label class="field">
               <span>举报原因</span>
-              <select class="input" :value="ensureReportForm('post', post.postId).reason" @change="(event) => (ensureReportForm('post', post.postId).reason = event.target.value)">
+              <select
+                class="input"
+                :value="ensureReportForm('post', post.postId).reason"
+                @change="(event) => (ensureReportForm('post', post.postId).reason = event.target.value)"
+              >
                 <option value="spam">垃圾信息</option>
                 <option value="abuse">辱骂攻击</option>
                 <option value="violent">暴力内容</option>
@@ -249,30 +277,39 @@ onMounted(async () => {
             </label>
           </div>
           <div class="row-actions">
-            <button class="btn-primary ghost" :disabled="isReportSubmitting('post', post.postId)" @click="onSubmitReport('post', post.postId)">
+            <UiButton
+              variant="ghost"
+              :disabled="isReportSubmitting('post', post.postId)"
+              @click="onSubmitReport('post', post.postId)"
+            >
               {{ isReportSubmitting("post", post.postId) ? "提交中..." : "提交举报" }}
-            </button>
+            </UiButton>
           </div>
-          <p v-if="getReportFeedback('post', post.postId)" class="muted">{{ getReportFeedback("post", post.postId) }}</p>
+          <UiStatus v-if="getReportFeedback('post', post.postId)" tone="muted">
+            {{ getReportFeedback("post", post.postId) }}
+          </UiStatus>
         </div>
 
         <div v-if="isCommentPanelOpen(post.postId)" class="comment-panel">
           <div class="comment-editor">
-            <input
+            <UiInput
               class="input"
-              type="text"
-              :value="feedStore.commentDrafts[post.postId] || ''"
+              :model-value="feedStore.commentDrafts[post.postId] || ''"
               placeholder="写下你的评论..."
-              @input="(event) => onChangeCommentDraft(post.postId, event)"
+              @update:model-value="(value) => feedStore.setCommentDraft(post.postId, value)"
               @keyup.enter="onSubmitComment(post.postId)"
             />
-            <button class="btn-primary ghost" :disabled="feedStore.commentSubmittingByPost[post.postId]" @click="onSubmitComment(post.postId)">
+            <UiButton
+              variant="ghost"
+              :disabled="feedStore.commentSubmittingByPost[post.postId]"
+              @click="onSubmitComment(post.postId)"
+            >
               {{ feedStore.commentSubmittingByPost[post.postId] ? "发送中..." : "发送" }}
-            </button>
+            </UiButton>
           </div>
 
-          <p v-if="feedStore.commentLoadingByPost[post.postId]" class="muted">正在加载评论...</p>
-          <p v-else-if="!(feedStore.commentsByPost[post.postId] || []).length" class="muted">暂无评论</p>
+          <UiStatus v-if="feedStore.commentLoadingByPost[post.postId]" tone="muted">正在加载评论...</UiStatus>
+          <UiStatus v-else-if="!(feedStore.commentsByPost[post.postId] || []).length" tone="muted">暂无评论</UiStatus>
 
           <ul class="comment-list">
             <li v-for="comment in feedStore.commentsByPost[post.postId] || []" :key="comment.commentId">
@@ -284,22 +321,76 @@ onMounted(async () => {
             </li>
           </ul>
 
-          <button
+          <UiButton
             v-if="feedStore.commentHasMoreByPost[post.postId]"
-            class="text-btn"
+            variant="text"
             :disabled="feedStore.commentLoadingByPost[post.postId]"
             @click="onLoadMoreComments(post.postId)"
           >
             加载更多评论
-          </button>
+          </UiButton>
         </div>
       </div>
 
       <div class="hero-actions">
-        <button v-if="hasMore" class="btn-primary ghost" :disabled="loadingMore" @click="feedStore.loadMore">
+        <UiButton v-if="hasMore" variant="ghost" :disabled="loadingMore" @click="feedStore.loadMore">
           {{ loadingMore ? "加载中..." : "加载更多" }}
-        </button>
+        </UiButton>
       </div>
-    </article>
+    </UiCard>
   </section>
 </template>
+
+<style scoped>
+.feed-hero .subtitle {
+  max-width: 45em;
+}
+
+.feed-stats {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.feed-stat {
+  border: 1px solid var(--ag-border-soft);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--ag-text-soft);
+  background: var(--ag-btn-ghost-bg);
+}
+
+.composer-head {
+  margin-bottom: 10px;
+}
+
+.composer-head h2 {
+  margin-bottom: 6px;
+}
+
+.composer-head p {
+  margin: 0;
+}
+
+.timeline-panel {
+  overflow: hidden;
+}
+
+.timeline-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.timeline-card {
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.timeline-card .feed-content {
+  margin: 10px 0;
+}
+</style>

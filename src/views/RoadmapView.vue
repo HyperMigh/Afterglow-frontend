@@ -1,22 +1,125 @@
+<script setup>
+import UiCard from "../components/ui/UiCard.vue";
+
+const roadmapMilestones = [
+  {
+    id: "M1",
+    name: "认证与基础骨架",
+    status: "已完成",
+    goals: ["邮箱验证码登录", "统一响应与异常处理", "基础用户信息接口"]
+  },
+  {
+    id: "M2",
+    name: "社区时间线",
+    status: "进行中",
+    goals: ["发帖/评论/点赞", "举报链路", "游标分页与交互打磨"]
+  },
+  {
+    id: "M3",
+    name: "私聊能力",
+    status: "待启动",
+    goals: ["会话列表", "WebSocket 通道", "已读游标与基础同步"]
+  },
+  {
+    id: "M4",
+    name: "情绪模块",
+    status: "待启动",
+    goals: ["文本情绪识别", "颜色映射策略", "情绪概览卡片"]
+  },
+  {
+    id: "M5",
+    name: "AI 安抚助手",
+    status: "待启动",
+    goals: ["静一下建议生成", "敏感场景安全边界", "降级与可观测性"]
+  }
+];
+</script>
+
 <template>
-  <section class="hero-card compact">
+  <UiCard variant="hero" class="roadmap-hero">
     <p class="eyebrow">Roadmap Snapshot</p>
-    <h1>开发路线（初始版）</h1>
+    <h1>开发路线正在从「可运行」走向「可持续迭代」。</h1>
     <p class="subtitle">
-      当前是工程初始化阶段：先跑通 Vue + Spring Boot 联调，再逐步接入 Auth、Feed、Chat、Emotion、AI。
+      路线图围绕五个阶段推进：先保证基础业务闭环，再逐步扩展实时能力、情绪能力与 AI 能力。
     </p>
-  </section>
+  </UiCard>
 
   <section class="grid single">
-    <article class="panel">
+    <UiCard as="article" variant="panel" class="roadmap-panel">
       <h2>里程碑拆分</h2>
-      <ul class="todo-list">
-        <li>M1: 登录、基础数据模型、统一异常与响应</li>
-        <li>M2: 发帖/评论/点赞 + 时间线</li>
-        <li>M3: 私聊会话 + WebSocket + 已读游标</li>
-        <li>M4: 情绪分析与 palette 映射</li>
-        <li>M5: AI「静一下」与安全边界</li>
-      </ul>
-    </article>
+      <div class="milestone-list">
+        <article v-for="item in roadmapMilestones" :key="item.id" class="milestone-card">
+          <header>
+            <p class="milestone-id">{{ item.id }}</p>
+            <span class="milestone-status">{{ item.status }}</span>
+          </header>
+          <h3>{{ item.name }}</h3>
+          <ul class="todo-list">
+            <li v-for="goal in item.goals" :key="goal">{{ goal }}</li>
+          </ul>
+        </article>
+      </div>
+    </UiCard>
   </section>
 </template>
+
+<style scoped>
+.roadmap-hero h1 {
+  max-width: 16em;
+}
+
+.roadmap-panel h2 {
+  margin-bottom: 14px;
+}
+
+.milestone-list {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.milestone-card {
+  border: 1px solid var(--ag-border-soft);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--ag-btn-ghost-bg);
+}
+
+.milestone-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.milestone-id {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  min-width: 38px;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #061724;
+  background: linear-gradient(130deg, #9de9e2, #ffc88d);
+}
+
+.milestone-status {
+  font-size: 12px;
+  color: var(--ag-text-soft);
+}
+
+.milestone-card h3 {
+  margin: 8px 0 10px;
+  font-size: 16px;
+}
+
+@media (max-width: 960px) {
+  .milestone-list {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
