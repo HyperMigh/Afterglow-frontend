@@ -33,28 +33,18 @@ const classList = computed(() => [
 
 <style scoped>
 .ui-card {
-  border: 1px solid var(--ag-border-strong);
-  border-radius: 20px;
+  border: 1px solid var(--ag-border);
+  border-radius: 14px;
   position: relative;
-  overflow: hidden;
-}
-
-.ui-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 16px;
-  right: 16px;
-  height: 1px;
-  background: var(--ag-nav-highlight);
-  opacity: 0.7;
+  overflow: clip;
+  background: #ffffff;
+  box-shadow: var(--ag-shadow-card);
 }
 
 .ui-card--hero {
-  border-radius: 28px;
+  border-radius: 16px;
   padding: 30px 28px;
-  background: var(--ag-surface-hero);
-  box-shadow: var(--ag-shadow-panel);
+  background: #ffffff;
 }
 
 .ui-card--hero.ui-card--compact {
@@ -63,8 +53,6 @@ const classList = computed(() => [
 
 .ui-card--panel {
   padding: 18px;
-  background: var(--ag-surface-panel);
-  box-shadow: var(--ag-shadow-panel);
-  backdrop-filter: blur(8px);
+  background: #ffffff;
 }
 </style>

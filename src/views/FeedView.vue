@@ -1,9 +1,8 @@
 <script setup>
-import { computed, onMounted, reactive, watch } from "vue";
+import { computed, onMounted, reactive } from "vue";
 import { storeToRefs } from "pinia";
 import { useFeedStore } from "../stores/feed";
 import { useReportStore } from "../stores/report";
-import { useEmotionStore } from "../stores/emotion";
 import UiButton from "../components/ui/UiButton.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import UiInput from "../components/ui/UiInput.vue";
@@ -11,7 +10,6 @@ import UiStatus from "../components/ui/UiStatus.vue";
 
 const feedStore = useFeedStore();
 const reportStore = useReportStore();
-const emotionStore = useEmotionStore();
 const { posts, loading, loadingMore, hasMore, publishing, error } = storeToRefs(feedStore);
 const { submittingTargetKeyMap, feedbackByTargetKey } = storeToRefs(reportStore);
 
@@ -30,22 +28,6 @@ const canPublish = computed(() => contentLength.value > 0 && contentLength.value
 const postCount = computed(() => posts.value.length);
 const totalLikeCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.likeCount || 0), 0));
 const totalCommentCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.commentCount || 0), 0));
-
-function postCardStyle(postId) {
-  const palette = emotionStore.paletteByTargetKey[`post-${postId}`]?.palette;
-  const stops = palette?.bg?.stops;
-  if (!Array.isArray(stops) || stops.length < 2) {
-    return {};
-  }
-  const angle = Number(palette?.bg?.angle || 135);
-  return {
-    background: `linear-gradient(${angle}deg, ${stops.join(", ")})`
-  };
-}
-
-function postPaletteSource(postId) {
-  return emotionStore.paletteByTargetKey[`post-${postId}`]?.source || "";
-}
 
 function formatDateTime(value) {
   if (!value) {
@@ -161,16 +143,6 @@ async function onLoadMoreComments(postId) {
 onMounted(async () => {
   await feedStore.loadFirstPage();
 });
-
-watch(
-  posts,
-  (rows) => {
-    rows.forEach((post) => {
-      emotionStore.loadPalette("post", post.postId).catch(() => {});
-    });
-  },
-  { immediate: true }
-);
 </script>
 
 <template>
@@ -249,14 +221,13 @@ watch(
       <UiStatus v-else-if="error" tone="error">{{ error }}</UiStatus>
       <UiStatus v-else-if="!posts.length" tone="muted">还没有帖子，发布第一条内容吧。</UiStatus>
 
-      <div v-for="post in posts" :key="post.postId" class="feed-card timeline-card" :style="postCardStyle(post.postId)">
+      <div v-for="post in posts" :key="post.postId" class="feed-card timeline-card">
         <header class="feed-card-head">
           <div>
             <div class="feed-author">
               <strong>{{ post.authorName || "匿名用户" }}</strong>
               <span v-if="post.anonymous" class="tag">匿名</span>
               <span v-if="post.mine" class="tag mine">我的</span>
-              <span v-if="postPaletteSource(post.postId)" class="tag">palette: {{ postPaletteSource(post.postId) }}</span>
             </div>
             <small class="muted">{{ formatDateTime(post.createdAt) }}</small>
           </div>
@@ -379,12 +350,12 @@ watch(
 .feed-hero::after {
   content: "";
   position: absolute;
-  width: 340px;
-  height: 340px;
-  right: -150px;
-  top: -210px;
+  width: 220px;
+  height: 220px;
+  right: -90px;
+  top: -120px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(230, 0, 8, 0.24), transparent 68%);
+  background: rgba(17, 24, 39, 0.05);
 }
 
 .feed-hero .subtitle {
@@ -399,12 +370,12 @@ watch(
 }
 
 .feed-stat {
-  border: 1px solid rgba(230, 0, 8, 0.36);
+  border: 1px solid var(--ag-border);
   border-radius: 999px;
   padding: 6px 11px;
   font-size: 12px;
-  color: var(--ag-text-strong);
-  background: rgba(230, 0, 8, 0.14);
+  color: var(--ag-text-soft);
+  background: var(--ag-bg-soft);
 }
 
 .composer-head {
@@ -414,7 +385,6 @@ watch(
 .composer-head h2 {
   margin: 0 0 6px;
   font-size: 24px;
-  text-transform: uppercase;
 }
 
 .composer-head p {
@@ -436,13 +406,13 @@ watch(
 .timeline-head h2 {
   margin: 0;
   font-size: 24px;
-  text-transform: uppercase;
 }
 
 .timeline-card {
   border-radius: 16px;
   padding: 16px;
-  border-left: 2px solid rgba(230, 0, 8, 0.58);
+  border-left: 2px solid var(--ag-border-strong);
+  background: #ffffff;
 }
 
 .timeline-card .feed-content {

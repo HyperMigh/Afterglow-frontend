@@ -52,14 +52,14 @@ function onInput(event) {
 <style scoped>
 .ui-input {
   width: 100%;
-  border: 1px solid var(--ag-border-soft);
-  border-radius: 12px;
-  padding: 10px 12px;
+  border: 1px solid var(--ag-border);
+  border-radius: 10px;
+  padding: 11px 13px;
   font-size: 14px;
-  color: var(--ag-input-text);
-  background: var(--ag-input-bg);
+  color: var(--ag-text);
+  background: #ffffff;
   outline: none;
-  transition: border-color 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .ui-input::placeholder {
@@ -67,13 +67,12 @@ function onInput(event) {
 }
 
 .ui-input:focus {
-  border-color: var(--ag-border-focus);
-  box-shadow: 0 0 0 2px var(--ag-focus-ring);
-  background: var(--ag-input-bg);
+  border-color: var(--ag-accent);
+  box-shadow: 0 0 0 3px var(--ag-focus-ring);
 }
 
 .ui-input.is-invalid {
-  border-color: var(--ag-danger-border);
+  border-color: #f97066;
 }
 
 textarea.ui-input {

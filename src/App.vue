@@ -1,17 +1,21 @@
 ﻿<script setup>
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { computed, onMounted } from "vue";
-import { storeToRefs } from "pinia";
 import { useAuthStore } from "./stores/auth";
 import { useThemeStore } from "./stores/theme";
 
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const route = useRoute();
-const { theme } = storeToRefs(themeStore);
 
-const themeButtonText = computed(() => (theme.value === "dark" ? "切换浅色" : "切换深色"));
 const isAuthLayout = computed(() => route.meta.layout === "auth");
+
+const marketingLinks = [
+  { label: "Product", to: { path: "/", hash: "#product" } },
+  { label: "Solutions", to: { path: "/", hash: "#solutions" } },
+  { label: "Pricing", to: { path: "/", hash: "#pricing" } },
+  { label: "Docs", to: { path: "/", hash: "#docs" } }
+];
 
 onMounted(async () => {
   themeStore.initializeTheme();
@@ -37,27 +41,20 @@ onMounted(async () => {
         <span class="brand-mark">AG</span>
         <span class="brand-copy">
           <strong>Afterglow</strong>
-          <small>余温 · Community MVP</small>
+          <small>Product Platform</small>
         </span>
       </RouterLink>
 
-      <nav class="links" aria-label="主导航">
-        <RouterLink to="/" class="nav-link">首页</RouterLink>
-        <RouterLink to="/feed" class="nav-link">社区</RouterLink>
-        <RouterLink to="/chat" class="nav-link">私聊</RouterLink>
-        <RouterLink to="/mirror" class="nav-link">静一下</RouterLink>
-        <RouterLink to="/roadmap" class="nav-link">开发路线</RouterLink>
+      <nav class="links" aria-label="Main">
+        <RouterLink v-for="link in marketingLinks" :key="link.label" :to="link.to" class="nav-link">{{ link.label }}</RouterLink>
       </nav>
 
-      <nav class="nav-right" aria-label="账号操作">
-        <button class="link-btn" @click="themeStore.toggleTheme">{{ themeButtonText }}</button>
-        <span v-if="authStore.isAuthenticated && authStore.me?.nickname" class="user-pill">
-          {{ authStore.me.nickname }}
-        </span>
-        <span v-else class="user-pill muted-pill">访客模式</span>
+      <nav class="nav-right" aria-label="Auth actions">
+        <RouterLink v-if="!authStore.isAuthenticated" to="/login" class="link-btn">Login</RouterLink>
+        <RouterLink v-if="!authStore.isAuthenticated" to="/register" class="link-btn cta-btn">Get Started</RouterLink>
 
-        <button v-if="authStore.isAuthenticated" class="link-btn" @click="authStore.logout">退出</button>
-        <RouterLink v-else to="/login" class="link-btn cta-btn">登录</RouterLink>
+        <RouterLink v-if="authStore.isAuthenticated" to="/feed" class="link-btn">Workspace</RouterLink>
+        <button v-if="authStore.isAuthenticated" class="link-btn" @click="authStore.logout">Logout</button>
       </nav>
     </header>
 
@@ -72,4 +69,3 @@ onMounted(async () => {
   min-height: 100vh;
 }
 </style>
-

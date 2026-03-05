@@ -111,12 +111,12 @@ onMounted(async () => {
 .mirror-hero::after {
   content: "";
   position: absolute;
-  width: 320px;
-  height: 320px;
-  right: -130px;
-  top: -180px;
+  width: 220px;
+  height: 220px;
+  right: -90px;
+  top: -120px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(230, 0, 8, 0.25), transparent 68%);
+  background: rgba(17, 24, 39, 0.05);
 }
 
 .mirror-latest {
@@ -125,18 +125,17 @@ onMounted(async () => {
 }
 
 .mirror-block {
-  border: 1px solid var(--ag-border-soft);
+  border: 1px solid var(--ag-border);
   border-radius: 14px;
   padding: 11px;
-  background: var(--ag-btn-ghost-bg);
-  border-left: 2px solid rgba(230, 0, 8, 0.58);
+  background: #ffffff;
+  border-left: 2px solid var(--ag-border-strong);
 }
 
 .mirror-block h3 {
   margin: 0 0 6px;
   font-size: 18px;
-  text-transform: uppercase;
-  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
 .mirror-block p {
@@ -153,11 +152,11 @@ onMounted(async () => {
 }
 
 .history-card {
-  border: 1px solid var(--ag-border-soft);
+  border: 1px solid var(--ag-border);
   border-radius: 14px;
   padding: 11px;
-  background: var(--ag-btn-ghost-bg);
-  border-left: 2px solid rgba(230, 0, 8, 0.45);
+  background: #ffffff;
+  border-left: 2px solid var(--ag-border-strong);
 }
 
 .history-card header {

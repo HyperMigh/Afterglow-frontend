@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { computed, onUnmounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
@@ -7,6 +7,8 @@ import UiButton from "../components/ui/UiButton.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import UiInput from "../components/ui/UiInput.vue";
 import UiStatus from "../components/ui/UiStatus.vue";
+
+const FEEDBACK_CODE_SENT = "__EMAIL_CODE_SENT__";
 
 const props = defineProps({
   scene: {
@@ -39,10 +41,12 @@ const feedback = reactive({
 });
 
 const cooldown = ref(0);
+const codeExpireRemaining = ref(0);
 let cooldownTimer = null;
+let codeExpireTimer = null;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CODE_PATTERN = /^\d{4,8}$/;
+const CODE_PATTERN = /^\d{6}$/;
 const CAPTCHA_PATTERN = /^[A-Za-z0-9]{4,8}$/;
 
 const isLoginMode = computed(() => props.scene === "login");
@@ -52,50 +56,104 @@ const isCaptchaValid = computed(() => CAPTCHA_PATTERN.test(form.captchaCode.trim
 const submitLoading = computed(() => (isLoginMode.value ? loggingIn.value : registering.value));
 const canSendCode = computed(() => cooldown.value <= 0 && !sendingCode.value);
 const canSubmit = computed(() => isEmailValid.value && isCodeValid.value && isCaptchaValid.value && !submitLoading.value);
-const feedbackTone = computed(() => (feedback.message ? feedback.type : "muted"));
+
+const sceneTitle = computed(() => (isLoginMode.value ? "Welcome back" : "Create your account"));
+const sceneDescription = computed(() =>
+  isLoginMode.value
+    ? "Use your email verification credentials to access your workspace."
+    : "Create an account with email verification in a secure and reliable flow."
+);
+
+const feedbackTone = computed(() => {
+  if (feedback.message === FEEDBACK_CODE_SENT) {
+    return "success";
+  }
+  return feedback.message ? feedback.type : "muted";
+});
+
 const sendCodeButtonText = computed(() => {
   if (sendingCode.value) {
-    return "发送中...";
+    return "Sending";
   }
   if (cooldown.value > 0) {
-    return `重新发送 (${cooldown.value}s)`;
+    return `Retry ${cooldown.value}s`;
   }
-  return "获取邮箱验证码";
+  return "Send code";
 });
+
 const submitButtonText = computed(() => {
   if (submitLoading.value) {
-    return isLoginMode.value ? "登录中..." : "注册中...";
+    return isLoginMode.value ? "Logging in" : "Creating account";
   }
-  return isLoginMode.value ? "登录" : "注册";
+  return isLoginMode.value ? "Login" : "Sign up";
 });
-const headTitle = computed(() => (isLoginMode.value ? "登录账号" : "创建账号"));
-const headDesc = computed(() =>
-  isLoginMode.value
-    ? "输入邮箱验证码与图形验证码后登录。"
-    : "先获取邮箱验证码，再输入图形验证码完成注册。"
-);
+
 const defaultFeedbackText = computed(() =>
-  isLoginMode.value ? "请先获取邮箱验证码，再输入图形验证码完成登录。" : "请先获取邮箱验证码，再输入图形验证码完成注册。"
+  isLoginMode.value
+    ? "Enter your 6-digit code and captcha to continue."
+    : "Complete verification details to finish registration."
 );
+
+const feedbackDisplayMessage = computed(() => {
+  if (feedback.message === FEEDBACK_CODE_SENT) {
+    return codeExpireRemaining.value > 0
+      ? `Verification code sent. ${codeExpireRemaining.value}s remaining.`
+      : "Verification code sent. Please complete validation soon.";
+  }
+  return feedback.message || defaultFeedbackText.value;
+});
 
 function setFeedback(type, message) {
   feedback.type = type;
   feedback.message = message;
 }
 
-function startCooldown(seconds = 60) {
-  cooldown.value = seconds;
+function clearCooldownTimer() {
   if (cooldownTimer) {
     window.clearInterval(cooldownTimer);
+    cooldownTimer = null;
   }
+}
+
+function clearCodeExpireTimer() {
+  if (codeExpireTimer) {
+    window.clearInterval(codeExpireTimer);
+    codeExpireTimer = null;
+  }
+}
+
+function startCooldown(seconds = 60) {
+  cooldown.value = seconds;
+  clearCooldownTimer();
   cooldownTimer = window.setInterval(() => {
     if (cooldown.value <= 1) {
       cooldown.value = 0;
-      window.clearInterval(cooldownTimer);
-      cooldownTimer = null;
+      clearCooldownTimer();
       return;
     }
     cooldown.value -= 1;
+  }, 1000);
+}
+
+function startCodeExpireCountdown(seconds) {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+  codeExpireRemaining.value = safeSeconds;
+  clearCodeExpireTimer();
+
+  if (safeSeconds <= 0) {
+    return;
+  }
+
+  codeExpireTimer = window.setInterval(() => {
+    if (codeExpireRemaining.value <= 1) {
+      codeExpireRemaining.value = 0;
+      clearCodeExpireTimer();
+      if (feedback.message === FEEDBACK_CODE_SENT) {
+        setFeedback("info", "Code expired. Please request a new one.");
+      }
+      return;
+    }
+    codeExpireRemaining.value -= 1;
   }, 1000);
 }
 
@@ -114,25 +172,24 @@ async function refreshCaptcha() {
     captcha.imageData = result.imageData;
     captcha.expireSeconds = Number(result.expireSeconds || 0);
   } catch (error) {
-    setFeedback("error", authStore.error || error.message || "获取图形验证码失败");
+    setFeedback("error", authStore.error || error.message || "Failed to load captcha");
   }
 }
 
 async function resetForScene() {
   form.code = "";
   form.captchaCode = "";
-  setFeedback("info", isLoginMode.value ? "当前为登录模式" : "当前为注册模式");
-  if (cooldownTimer) {
-    window.clearInterval(cooldownTimer);
-    cooldownTimer = null;
-  }
+  setFeedback("info", isLoginMode.value ? "Login mode" : "Signup mode");
+  clearCooldownTimer();
+  clearCodeExpireTimer();
   cooldown.value = 0;
+  codeExpireRemaining.value = 0;
   await refreshCaptcha();
 }
 
 async function onSendCode() {
   if (!isEmailValid.value) {
-    setFeedback("error", "请输入正确的邮箱地址");
+    setFeedback("error", "Please enter a valid email address");
     return;
   }
 
@@ -141,25 +198,28 @@ async function onSendCode() {
       email: form.email.trim(),
       scene: props.scene
     });
-    const cooldownSeconds = Math.min(90, Math.max(30, Number(result.expireSeconds) || 60));
+
+    const expireSeconds = Math.max(1, Number(result.expireSeconds) || 300);
+    const cooldownSeconds = Math.min(90, Math.max(30, expireSeconds));
     startCooldown(cooldownSeconds);
-    setFeedback("success", `邮箱验证码已发送，有效期 ${result.expireSeconds} 秒`);
+    startCodeExpireCountdown(expireSeconds);
+    setFeedback("success", FEEDBACK_CODE_SENT);
   } catch (error) {
-    setFeedback("error", authStore.error || error.message || "发送验证码失败");
+    setFeedback("error", authStore.error || error.message || "Failed to send code");
   }
 }
 
 async function onSubmit() {
   if (!isEmailValid.value) {
-    setFeedback("error", "请输入正确的邮箱地址");
+    setFeedback("error", "Please enter a valid email address");
     return;
   }
   if (!isCodeValid.value) {
-    setFeedback("error", "邮箱验证码必须是 4~8 位数字");
+    setFeedback("error", "Verification code must be 6 digits");
     return;
   }
   if (!captcha.captchaId || !isCaptchaValid.value) {
-    setFeedback("error", "请输入图形验证码");
+    setFeedback("error", "Please enter the captcha code");
     return;
   }
 
@@ -173,17 +233,21 @@ async function onSubmit() {
   try {
     if (isLoginMode.value) {
       await authStore.login(payload);
-      setFeedback("success", "登录成功，正在跳转...");
+      setFeedback("success", "Login successful. Redirecting...");
     } else {
       await authStore.register(payload);
-      setFeedback("success", "注册成功，正在跳转...");
+      setFeedback("success", "Account created. Redirecting...");
     }
     await router.replace(normalizeRedirect());
   } catch (error) {
-    setFeedback("error", authStore.error || error.message || (isLoginMode.value ? "登录失败" : "注册失败"));
+    setFeedback("error", authStore.error || error.message || (isLoginMode.value ? "Login failed" : "Signup failed"));
     form.captchaCode = "";
     await refreshCaptcha();
   }
+}
+
+function onOAuth(provider) {
+  setFeedback("info", `${provider} login will be available soon.`);
 }
 
 watch(
@@ -195,101 +259,154 @@ watch(
 );
 
 onUnmounted(() => {
-  if (cooldownTimer) {
-    window.clearInterval(cooldownTimer);
-    cooldownTimer = null;
-  }
+  clearCooldownTimer();
+  clearCodeExpireTimer();
 });
 </script>
 
 <template>
   <section class="auth-page">
-    <UiCard as="article" variant="panel" class="auth-modal">
-      <header class="auth-head">
-        <div class="mode-tabs" role="tablist" aria-label="认证模式">
-          <RouterLink to="/login" class="mode-tab" :class="{ active: isLoginMode }">登录</RouterLink>
-          <RouterLink to="/register" class="mode-tab" :class="{ active: !isLoginMode }">注册</RouterLink>
+    <div class="auth-shell">
+      <RouterLink to="/" class="auth-brand">
+        <span class="auth-brand-mark">AG</span>
+        <span>
+          <strong>Afterglow</strong>
+          <small>Product Platform</small>
+        </span>
+      </RouterLink>
+
+      <UiCard as="article" variant="panel" class="auth-card">
+        <header class="auth-head">
+          <div class="mode-tabs" role="tablist" aria-label="Authentication mode">
+            <RouterLink to="/login" class="mode-tab" :class="{ active: isLoginMode }">Login</RouterLink>
+            <RouterLink to="/register" class="mode-tab" :class="{ active: !isLoginMode }">Sign up</RouterLink>
+          </div>
+          <h1>{{ sceneTitle }}</h1>
+          <p>{{ sceneDescription }}</p>
+        </header>
+
+        <form class="auth-form" @submit.prevent="onSubmit">
+          <label class="input-group">
+            <span>Email</span>
+            <UiInput
+              :model-value="form.email"
+              :invalid="form.email && !isEmailValid"
+              type="email"
+              placeholder="you@company.com"
+              autocomplete="email"
+              @update:model-value="(value) => (form.email = value)"
+            />
+          </label>
+
+          <label class="input-group">
+            <span>Verification code</span>
+            <div class="code-line">
+              <UiInput
+                :model-value="form.code"
+                :invalid="form.code && !isCodeValid"
+                type="text"
+                placeholder="6-digit code"
+                maxlength="6"
+                @update:model-value="(value) => (form.code = value)"
+                @keyup.enter="onSubmit"
+              />
+              <UiButton type="button" class="code-btn" :disabled="!canSendCode" @click="onSendCode">
+                {{ sendCodeButtonText }}
+              </UiButton>
+            </div>
+          </label>
+
+          <label class="input-group">
+            <span>Captcha</span>
+            <div class="captcha-line">
+              <UiInput
+                :model-value="form.captchaCode"
+                :invalid="form.captchaCode && !isCaptchaValid"
+                type="text"
+                placeholder="Enter captcha"
+                maxlength="8"
+                @update:model-value="(value) => (form.captchaCode = value)"
+              />
+              <button type="button" class="captcha-image-btn" @click="refreshCaptcha">
+                <img v-if="captcha.imageData" :src="captcha.imageData" alt="Captcha" class="captcha-image" />
+                <span v-else class="captcha-fallback">Refresh</span>
+              </button>
+            </div>
+          </label>
+
+          <UiButton class="submit-btn" type="submit" :disabled="!canSubmit" block>
+            {{ submitButtonText }}
+          </UiButton>
+        </form>
+
+        <div class="divider"><span>or continue with</span></div>
+
+        <div class="oauth-row">
+          <button type="button" class="oauth-btn" @click="onOAuth('Google')">Google</button>
+          <button type="button" class="oauth-btn" @click="onOAuth('GitHub')">GitHub</button>
         </div>
-        <h1>{{ headTitle }}</h1>
-        <p>{{ headDesc }}</p>
-      </header>
 
-      <form class="auth-form" @submit.prevent="onSubmit">
-        <label class="input-group">
-          <span>邮箱</span>
-          <UiInput
-            :model-value="form.email"
-            :invalid="form.email && !isEmailValid"
-            type="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            @update:model-value="(value) => (form.email = value)"
-          />
-        </label>
-
-        <label class="input-group">
-          <span>邮箱验证码</span>
-          <div class="code-line">
-            <UiInput
-              :model-value="form.code"
-              :invalid="form.code && !isCodeValid"
-              type="text"
-              placeholder="4~8 位数字"
-              maxlength="8"
-              @update:model-value="(value) => (form.code = value)"
-              @keyup.enter="onSubmit"
-            />
-            <UiButton type="button" class="code-btn" :disabled="!canSendCode" @click="onSendCode">
-              {{ sendCodeButtonText }}
-            </UiButton>
-          </div>
-        </label>
-
-        <label class="input-group">
-          <span>图形验证码</span>
-          <div class="captcha-line">
-            <UiInput
-              :model-value="form.captchaCode"
-              :invalid="form.captchaCode && !isCaptchaValid"
-              type="text"
-              placeholder="输入图形验证码"
-              maxlength="8"
-              @update:model-value="(value) => (form.captchaCode = value)"
-            />
-            <button type="button" class="captcha-image-btn" @click="refreshCaptcha">
-              <img v-if="captcha.imageData" :src="captcha.imageData" alt="图形验证码" class="captcha-image" />
-              <span v-else class="captcha-fallback">点击获取</span>
-            </button>
-          </div>
-        </label>
-
-        <UiButton class="submit-btn" type="submit" :disabled="!canSubmit">
-          {{ submitButtonText }}
-        </UiButton>
-      </form>
-
-      <UiStatus class="feedback-text" :tone="feedbackTone">
-        {{ feedback.message || defaultFeedbackText }}
-      </UiStatus>
-    </UiCard>
+        <UiStatus class="feedback-text" :tone="feedbackTone">
+          {{ feedbackDisplayMessage }}
+        </UiStatus>
+      </UiCard>
+    </div>
   </section>
 </template>
 
 <style scoped>
 .auth-page {
-  min-height: 100vh;
+  min-height: calc(100vh - 40px);
   display: grid;
   place-items: center;
-  padding: 24px 14px;
+  padding: 30px 14px;
 }
 
-.auth-modal {
-  width: min(520px, 94vw);
-  border-radius: 28px;
-  border: 1px solid var(--ag-border-strong);
-  box-shadow: var(--ag-shadow-panel);
-  background: var(--ag-login-auth-bg, var(--ag-surface-panel));
+.auth-shell {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 14px;
+}
+
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto;
+}
+
+.auth-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: var(--ag-accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.auth-brand strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ag-text);
+}
+
+.auth-brand small {
+  display: block;
+  font-size: 12px;
+  color: var(--ag-text-muted);
+}
+
+.auth-card {
   padding: 24px;
+  border-radius: 18px;
+  border: 1px solid var(--ag-border-soft);
+  background: #ffffff;
+  box-shadow: var(--ag-shadow-card);
 }
 
 .auth-head {
@@ -297,56 +414,56 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+.mode-tabs {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 10px;
+  border: 1px solid var(--ag-border-soft);
+  background: var(--ag-bg-soft);
+  padding: 2px;
+}
+
+.mode-tab {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--ag-text-muted);
+  transition: all 0.18s ease;
+}
+
+.mode-tab.active {
+  background: #ffffff;
+  color: var(--ag-text);
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.08);
+}
+
 .auth-head h1 {
   margin: 0;
-  font-size: 40px;
-  line-height: 1;
-  text-transform: uppercase;
-  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
+  font-size: clamp(30px, 5vw, 36px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .auth-head p {
   margin: 0;
-  color: var(--ag-text-soft);
   font-size: 14px;
-}
-
-.mode-tabs {
-  display: inline-flex;
-  border-radius: 999px;
-  border: 1px solid var(--ag-border-soft);
-  overflow: hidden;
-  width: fit-content;
-}
-
-.mode-tab {
-  border: none;
-  padding: 6px 14px;
-  color: var(--ag-text-soft);
-  font-size: 15px;
-  text-transform: uppercase;
-  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
-}
-
-.mode-tab.active {
-  color: #ffffff;
-  background: linear-gradient(140deg, #ff6d4c, #e60008);
+  color: var(--ag-text-muted);
 }
 
 .auth-form {
-  margin-top: 16px;
+  margin-top: 14px;
   display: grid;
-  gap: 13px;
+  gap: 14px;
 }
 
 .input-group {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .input-group span {
-  font-size: 13px;
-  color: var(--ag-text-soft);
+  font-size: 14px;
+  color: var(--ag-text);
 }
 
 .code-line,
@@ -357,19 +474,23 @@ onUnmounted(() => {
 }
 
 .code-btn {
-  min-width: 126px;
-  border-radius: 999px;
+  min-width: 114px;
 }
 
 .captcha-image-btn {
   border: 1px solid var(--ag-border-soft);
   border-radius: 12px;
-  padding: 0;
-  width: 122px;
-  height: 42px;
-  background: var(--ag-btn-ghost-bg);
-  cursor: pointer;
+  background: #ffffff;
+  width: 112px;
+  height: 44px;
   overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.captcha-image-btn:hover {
+  border-color: #d0d6dc;
+  background: #f9fafb;
 }
 
 .captcha-image {
@@ -381,39 +502,77 @@ onUnmounted(() => {
 
 .captcha-fallback {
   display: inline-flex;
-  width: 100%;
-  height: 100%;
   align-items: center;
   justify-content: center;
-  color: var(--ag-text-muted);
+  width: 100%;
+  height: 100%;
   font-size: 12px;
+  color: var(--ag-text-muted);
 }
 
-.submit-btn {
-  padding: 12px 16px;
-  font-size: 15px;
+.divider {
+  margin-top: 14px;
+  position: relative;
+  text-align: center;
+}
+
+.divider::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 1px solid var(--ag-border-soft);
+}
+
+.divider span {
+  position: relative;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--ag-text-muted);
+  background: #ffffff;
+}
+
+.oauth-row {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.oauth-btn {
+  border: 1px solid var(--ag-border-soft);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #ffffff;
+  color: var(--ag-text);
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.oauth-btn:hover {
+  background: var(--ag-bg-soft);
+  border-color: #d0d6dc;
 }
 
 .feedback-text {
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 @media (max-width: 640px) {
-  .auth-modal {
-    padding: 20px 16px;
-    border-radius: 20px;
+  .auth-card {
+    padding: 18px 16px;
   }
 
   .code-line,
-  .captcha-line {
+  .captcha-line,
+  .oauth-row {
     grid-template-columns: 1fr;
   }
 
   .code-btn,
-  .submit-btn,
   .captcha-image-btn {
     width: 100%;
-    min-height: 42px;
+    min-height: 44px;
   }
 }
 </style>

@@ -49,91 +49,97 @@ const classList = computed(() => [
 
 <style scoped>
 .ui-btn {
-  border-radius: 999px;
-  border: 1px solid var(--ag-border-soft);
-  padding: 10px 17px;
-  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid var(--ag-border);
+  padding: 10px 16px;
+  font-weight: 600;
   font-size: 14px;
-  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  letter-spacing: -0.01em;
   line-height: 1;
-  color: var(--ag-btn-ghost-text);
-  background: var(--ag-btn-ghost-bg);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  color: var(--ag-text-soft);
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   cursor: pointer;
-  transition: transform 0.24s ease, filter 0.24s ease, border-color 0.24s ease, background 0.24s ease;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .ui-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: var(--ag-border-focus);
+  border-color: #d0d6dc;
+  background: var(--ag-bg-soft);
 }
 
 .ui-btn:disabled {
-  opacity: 0.72;
+  opacity: 0.66;
   cursor: not-allowed;
   box-shadow: none;
 }
 
 .ui-btn--solid {
-  border-color: rgba(230, 0, 8, 0.75);
-  color: var(--ag-btn-solid-text);
-  background: linear-gradient(140deg, var(--ag-accent-cool), var(--ag-accent-warm));
-  box-shadow: 0 12px 24px rgba(230, 0, 8, 0.28);
+  border-color: var(--ag-accent);
+  color: #ffffff;
+  background: var(--ag-accent);
+  box-shadow: 0 2px 8px rgba(63, 75, 138, 0.18);
 }
 
 .ui-btn--solid:hover:not(:disabled) {
-  filter: brightness(1.06);
+  border-color: var(--ag-accent-hover);
+  background: var(--ag-accent-hover);
 }
 
 .ui-btn--ghost {
-  color: var(--ag-btn-ghost-text);
-  border-color: var(--ag-border-soft);
-  background: var(--ag-btn-ghost-bg);
+  color: var(--ag-text-soft);
+  border-color: var(--ag-border);
+  background: #ffffff;
 }
 
 .ui-btn--ghost:hover:not(:disabled) {
-  border-color: var(--ag-border-focus);
-  background: var(--ag-btn-ghost-bg-hover);
+  border-color: #d0d6dc;
+  background: var(--ag-bg-soft);
 }
 
 .ui-btn--text {
-  border-radius: 999px;
-  padding: 7px 12px;
+  border-radius: 8px;
+  padding: 8px 12px;
   color: var(--ag-text);
-  border-color: var(--ag-border-soft);
+  border-color: transparent;
   background: transparent;
   box-shadow: none;
 }
 
 .ui-btn--text:hover:not(:disabled) {
-  border-color: var(--ag-border-focus);
-  color: var(--ag-text-strong);
-  background: var(--ag-btn-ghost-bg-hover);
+  border-color: var(--ag-border);
+  color: var(--ag-text);
+  background: var(--ag-bg-soft);
 }
 
 .ui-btn--danger {
-  border-radius: 999px;
-  padding: 7px 12px;
-  color: var(--ag-danger-text);
-  border-color: var(--ag-danger-border);
-  background: var(--ag-danger-bg);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: var(--ag-danger);
+  border-color: #fecdca;
+  background: #fef3f2;
   box-shadow: none;
 }
 
 .ui-btn--danger:hover:not(:disabled) {
-  border-color: var(--ag-danger-border-hover);
-  background: var(--ag-danger-bg-hover);
+  border-color: #fda29b;
+  background: #fee4e2;
 }
 
 .ui-btn--sm {
-  padding: 7px 13px;
+  padding: 8px 12px;
   font-size: 13px;
 }
 
 .ui-btn--md {
-  padding: 10px 17px;
+  padding: 10px 16px;
   font-size: 14px;
 }
 

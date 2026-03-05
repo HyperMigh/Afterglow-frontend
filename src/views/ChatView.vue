@@ -6,10 +6,8 @@ import UiCard from "../components/ui/UiCard.vue";
 import UiInput from "../components/ui/UiInput.vue";
 import UiStatus from "../components/ui/UiStatus.vue";
 import { useChatStore } from "../stores/chat";
-import { useEmotionStore } from "../stores/emotion";
 
 const chatStore = useChatStore();
-const emotionStore = useEmotionStore();
 const {
   conversations,
   discoverUsers,
@@ -35,9 +33,6 @@ const currentConversation = computed(() =>
 );
 const currentMessages = computed(() => messagesByConversation.value[currentConversationId.value] || []);
 const canSend = computed(() => Boolean(currentConversationId.value && form.message.trim()));
-const conversationPalette = computed(
-  () => emotionStore.paletteByTargetKey[`conversation-${currentConversationId.value}`]?.palette || null
-);
 
 function formatDateTime(value) {
   if (!value) {
@@ -46,21 +41,8 @@ function formatDateTime(value) {
   return new Date(value).toLocaleString("zh-CN", { hour12: false });
 }
 
-function conversationStyle() {
-  const palette = conversationPalette.value;
-  const stops = palette?.bg?.stops || null;
-  const angle = Number(palette?.bg?.angle || 135);
-  if (!stops || !Array.isArray(stops) || stops.length < 2) {
-    return {};
-  }
-  return {
-    background: `linear-gradient(${angle}deg, ${stops.join(", ")})`
-  };
-}
-
 async function onOpenConversation(conversationId) {
   await chatStore.openConversation(conversationId);
-  await emotionStore.loadPalette("conversation", conversationId).catch(() => {});
 }
 
 async function onCreateConversation(targetUserId) {
@@ -69,7 +51,6 @@ async function onCreateConversation(targetUserId) {
     return;
   }
   await chatStore.createOrOpenConversation(parsed);
-  await emotionStore.loadPalette("conversation", chatStore.currentConversationId).catch(() => {});
   form.targetUserId = "";
 }
 
@@ -91,9 +72,6 @@ async function onLoadOlder() {
 
 onMounted(async () => {
   await chatStore.bootstrap();
-  if (chatStore.currentConversationId) {
-    await emotionStore.loadPalette("conversation", chatStore.currentConversationId).catch(() => {});
-  }
 });
 </script>
 
@@ -143,7 +121,7 @@ onMounted(async () => {
       </ul>
     </UiCard>
 
-    <UiCard as="article" variant="panel" class="chat-main" :style="conversationStyle()">
+    <UiCard as="article" variant="panel" class="chat-main">
       <div class="main-head">
         <h2>会话列表</h2>
         <UiButton variant="ghost" size="sm" :disabled="loading" @click="chatStore.loadConversations({ reset: true })">
@@ -223,12 +201,12 @@ onMounted(async () => {
 .chat-hero::after {
   content: "";
   position: absolute;
-  width: 360px;
-  height: 360px;
-  right: -140px;
-  top: -200px;
+  width: 220px;
+  height: 220px;
+  right: -90px;
+  top: -120px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(230, 0, 8, 0.26), transparent 68%);
+  background: rgba(17, 24, 39, 0.05);
 }
 
 .chat-layout {
@@ -256,9 +234,7 @@ onMounted(async () => {
 .main-head h2,
 .message-head h3 {
   margin: 0;
-  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
 .quick-line {
@@ -280,10 +256,10 @@ onMounted(async () => {
 .discover-btn,
 .conversation-btn {
   width: 100%;
-  border: 1px solid var(--ag-border-soft);
+  border: 1px solid var(--ag-border);
   border-radius: 14px;
-  background: var(--ag-btn-ghost-bg);
-  color: var(--ag-text);
+  background: #ffffff;
+  color: var(--ag-text-soft);
   text-align: left;
   padding: 10px;
   cursor: pointer;
@@ -295,9 +271,9 @@ onMounted(async () => {
 .discover-btn:hover,
 .conversation-btn:hover,
 .conversation-btn.active {
-  border-color: var(--ag-border-focus);
-  background: var(--ag-btn-ghost-bg-hover);
-  box-shadow: inset 0 0 0 1px rgba(230, 0, 8, 0.2);
+  border-color: #d0d6dc;
+  background: var(--ag-bg-soft);
+  box-shadow: none;
 }
 
 .discover-btn small,
@@ -324,13 +300,13 @@ onMounted(async () => {
   justify-content: center;
   font-style: normal;
   color: #ffffff;
-  background: linear-gradient(140deg, var(--ag-accent-cool), var(--ag-accent-warm));
+  background: var(--ag-accent);
 }
 
 .split {
   margin: 14px 0;
   border: none;
-  border-top: 1px solid var(--ag-border-soft);
+  border-top: 1px solid var(--ag-border);
 }
 
 .message-list {
@@ -351,13 +327,13 @@ onMounted(async () => {
   margin: 0;
   padding: 9px 12px;
   border-radius: 13px;
-  border: 1px solid var(--ag-border-soft);
-  background: var(--ag-btn-ghost-bg);
+  border: 1px solid var(--ag-border);
+  background: #ffffff;
 }
 
 .message-list li.mine .bubble {
-  border-color: rgba(255, 109, 76, 0.64);
-  background: rgba(230, 0, 8, 0.18);
+  border-color: #c7cde2;
+  background: var(--ag-accent-soft);
 }
 
 .message-list small {

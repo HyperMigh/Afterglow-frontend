@@ -443,7 +443,7 @@ onUnmounted(() => {
   border-radius: 999px;
   font-weight: 700;
   color: #ffffff;
-  background: linear-gradient(140deg, #ff6d4c, #e60008);
+  background: var(--ag-accent);
 }
 
 .story-item h3 {

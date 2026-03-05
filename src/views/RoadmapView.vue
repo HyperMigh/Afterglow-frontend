@@ -77,7 +77,7 @@ const roadmapMilestones = [
   right: -160px;
   top: -210px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(230, 0, 8, 0.25), transparent 68%);
+  background: rgba(17, 24, 39, 0.04);
 }
 
 .roadmap-hero h1 {
@@ -87,7 +87,6 @@ const roadmapMilestones = [
 .roadmap-panel h2 {
   margin-bottom: 14px;
   font-size: 24px;
-  text-transform: uppercase;
 }
 
 .milestone-list {
@@ -100,8 +99,8 @@ const roadmapMilestones = [
   border: 1px solid var(--ag-border-soft);
   border-radius: 16px;
   padding: 13px;
-  background: var(--ag-btn-ghost-bg);
-  border-left: 2px solid rgba(230, 0, 8, 0.58);
+  background: #ffffff;
+  border-left: 2px solid var(--ag-border-strong);
 }
 
 .milestone-card header {
@@ -121,9 +120,9 @@ const roadmapMilestones = [
   height: 28px;
   padding: 0 10px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: #ffffff;
-  background: linear-gradient(140deg, #ff6d4c, #e60008);
+  background: var(--ag-accent);
 }
 
 .milestone-status {
@@ -136,9 +135,8 @@ const roadmapMilestones = [
 
 .milestone-card h3 {
   margin: 8px 0 10px;
-  font-size: 22px;
-  text-transform: uppercase;
-  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
+  font-size: 20px;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
 @media (max-width: 960px) {
