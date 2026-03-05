@@ -84,6 +84,15 @@ a {
   background: rgba(255, 179, 225, 0.18);
 }
 
+.user-pill {
+  border: 1px solid rgba(166, 198, 255, 0.7);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #d6e5ff;
+  background: rgba(166, 198, 255, 0.14);
+}
+
 .page {
   margin-top: 22px;
   display: grid;
@@ -228,9 +237,222 @@ h1 {
   box-shadow: 0 0 0 2px rgba(255, 196, 222, 0.2);
 }
 
+.field input.invalid {
+  border-color: rgba(255, 129, 150, 0.9);
+}
+
 .row-actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.textarea {
+  min-height: 120px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #eef4ff;
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+  resize: vertical;
+}
+
+.textarea.small {
+  min-height: 80px;
+}
+
+.textarea:focus {
+  border-color: rgba(255, 196, 222, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 196, 222, 0.2);
+}
+
+.hint {
+  color: rgba(238, 244, 255, 0.68);
+  font-size: 12px;
+}
+
+.hint.error {
+  color: #ffb3c0;
+}
+
+.checkbox-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 16px;
+}
+
+.login-main,
+.login-side {
+  min-width: 0;
+}
+
+.status-card {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.status-card p {
+  margin: 6px 0;
+}
+
+.feedback {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.feedback.info {
+  border-color: rgba(166, 198, 255, 0.45);
+  background: rgba(166, 198, 255, 0.12);
+}
+
+.feedback.success {
+  border-color: rgba(139, 255, 194, 0.5);
+  background: rgba(139, 255, 194, 0.12);
+}
+
+.feedback.error {
+  border-color: rgba(255, 135, 154, 0.6);
+  background: rgba(255, 135, 154, 0.13);
+}
+
+.feed-card {
+  margin-top: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.feed-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feed-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.tag.mine {
+  background: rgba(255, 196, 222, 0.25);
+}
+
+.feed-content {
+  margin: 12px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.media-list {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.media-list li + li {
+  margin-top: 6px;
+}
+
+.media-list a {
+  color: #b7d2ff;
+  text-decoration: underline;
+}
+
+.feed-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.text-btn {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: #e7efff;
+  cursor: pointer;
+}
+
+.text-btn:hover {
+  border-color: rgba(255, 196, 222, 0.8);
+  color: #ffd3e7;
+}
+
+.text-btn.danger:hover {
+  border-color: rgba(255, 135, 154, 0.8);
+  color: #ffc2d0;
+}
+
+.comment-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.comment-editor {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #eef4ff;
+  background: rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+.input:focus {
+  border-color: rgba(255, 196, 222, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 196, 222, 0.2);
+}
+
+select.input {
+  appearance: none;
+}
+
+.comment-list {
+  margin: 12px 0;
+  padding-left: 16px;
+}
+
+.comment-list li + li {
+  margin-top: 10px;
+}
+
+.comment-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.report-panel {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.16);
 }
 
 @media (max-width: 960px) {
@@ -242,5 +464,9 @@ h1 {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+
+  .login-layout {
+    grid-template-columns: 1fr;
   }
 }

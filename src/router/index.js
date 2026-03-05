@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import RoadmapView from "../views/RoadmapView.vue";
 import LoginView from "../views/LoginView.vue";
+import FeedView from "../views/FeedView.vue";
 import { getStoredAccessToken } from "../api/client";
 
 const routes = [
@@ -14,6 +15,14 @@ const routes = [
     path: "/roadmap",
     name: "roadmap",
     component: RoadmapView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: "/feed",
+    name: "feed",
+    component: FeedView,
     meta: {
       requiresAuth: true
     }
@@ -42,7 +51,7 @@ router.beforeEach((to) => {
   }
   if (to.name === "login" && hasToken) {
     return {
-      name: "home"
+      name: "feed"
     };
   }
   return true;

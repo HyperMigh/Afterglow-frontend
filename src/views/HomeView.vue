@@ -1,11 +1,13 @@
 <script setup>
 import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
+import { useRouter } from "vue-router";
 import { useSystemStore } from "../stores/system";
 import { useAuthStore } from "../stores/auth";
 
 const systemStore = useSystemStore();
 const authStore = useAuthStore();
+const router = useRouter();
 const { health, greeting, loading, error } = storeToRefs(systemStore);
 const { me, isAuthenticated: authed } = storeToRefs(authStore);
 
@@ -32,6 +34,8 @@ onMounted(async () => {
       <button class="btn-primary" :disabled="loading" @click="systemStore.loadSystemStatus">
         {{ loading ? "检测中..." : "检测后端状态" }}
       </button>
+      <button v-if="authed" class="btn-primary ghost" @click="router.push('/feed')">进入社区</button>
+      <button v-else class="btn-primary ghost" @click="router.push('/login')">去登录</button>
     </div>
   </section>
 

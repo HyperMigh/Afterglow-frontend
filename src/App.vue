@@ -23,8 +23,12 @@ onMounted(async () => {
       <div class="brand">Afterglow 余温</div>
       <nav class="links">
         <RouterLink to="/">首页</RouterLink>
+        <RouterLink to="/feed">社区</RouterLink>
         <RouterLink to="/roadmap">开发路线</RouterLink>
         <RouterLink to="/login">登录</RouterLink>
+        <span v-if="authStore.isAuthenticated && authStore.me?.nickname" class="user-pill">
+          {{ authStore.me.nickname }}
+        </span>
         <button v-if="authStore.isAuthenticated" class="link-btn" @click="authStore.logout">退出</button>
       </nav>
     </header>
