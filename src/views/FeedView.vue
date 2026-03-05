@@ -371,32 +371,50 @@ watch(
 </template>
 
 <style scoped>
+.feed-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.feed-hero::after {
+  content: "";
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  right: -150px;
+  top: -210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 0, 8, 0.24), transparent 68%);
+}
+
 .feed-hero .subtitle {
   max-width: 45em;
 }
 
 .feed-stats {
-  margin-top: 12px;
+  margin-top: 14px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 9px;
 }
 
 .feed-stat {
-  border: 1px solid var(--ag-border-soft);
+  border: 1px solid rgba(230, 0, 8, 0.36);
   border-radius: 999px;
-  padding: 5px 10px;
+  padding: 6px 11px;
   font-size: 12px;
-  color: var(--ag-text-soft);
-  background: var(--ag-btn-ghost-bg);
+  color: var(--ag-text-strong);
+  background: rgba(230, 0, 8, 0.14);
 }
 
 .composer-head {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .composer-head h2 {
-  margin-bottom: 6px;
+  margin: 0 0 6px;
+  font-size: 24px;
+  text-transform: uppercase;
 }
 
 .composer-head p {
@@ -412,11 +430,19 @@ watch(
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  margin-bottom: 6px;
+}
+
+.timeline-head h2 {
+  margin: 0;
+  font-size: 24px;
+  text-transform: uppercase;
 }
 
 .timeline-card {
   border-radius: 16px;
   padding: 16px;
+  border-left: 2px solid rgba(230, 0, 8, 0.58);
 }
 
 .timeline-card .feed-content {

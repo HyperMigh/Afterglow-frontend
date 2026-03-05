@@ -64,12 +64,30 @@ const roadmapMilestones = [
 </template>
 
 <style scoped>
+.roadmap-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.roadmap-hero::after {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  right: -160px;
+  top: -210px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 0, 8, 0.25), transparent 68%);
+}
+
 .roadmap-hero h1 {
   max-width: 16em;
 }
 
 .roadmap-panel h2 {
   margin-bottom: 14px;
+  font-size: 24px;
+  text-transform: uppercase;
 }
 
 .milestone-list {
@@ -80,9 +98,10 @@ const roadmapMilestones = [
 
 .milestone-card {
   border: 1px solid var(--ag-border-soft);
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 16px;
+  padding: 13px;
   background: var(--ag-btn-ghost-bg);
+  border-left: 2px solid rgba(230, 0, 8, 0.58);
 }
 
 .milestone-card header {
@@ -103,18 +122,23 @@ const roadmapMilestones = [
   padding: 0 10px;
   font-size: 12px;
   font-weight: 700;
-  color: #061724;
-  background: linear-gradient(130deg, #9de9e2, #ffc88d);
+  color: #ffffff;
+  background: linear-gradient(140deg, #ff6d4c, #e60008);
 }
 
 .milestone-status {
   font-size: 12px;
   color: var(--ag-text-soft);
+  border: 1px solid var(--ag-border-soft);
+  border-radius: 999px;
+  padding: 3px 8px;
 }
 
 .milestone-card h3 {
   margin: 8px 0 10px;
-  font-size: 16px;
+  font-size: 22px;
+  text-transform: uppercase;
+  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
 }
 
 @media (max-width: 960px) {

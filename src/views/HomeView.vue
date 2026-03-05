@@ -105,24 +105,41 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.home-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-hero::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  right: -120px;
+  bottom: -160px;
+  border-radius: 50%;
+  border: 1px solid var(--ag-border-soft);
+  opacity: 0.5;
+}
+
 .home-hero h1 {
-  max-width: 15em;
+  max-width: 14em;
 }
 
 .status-strip {
-  margin-top: 14px;
+  margin-top: 16px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 9px;
 }
 
 .status-pill {
-  border: 1px solid var(--ag-border-soft);
+  border: 1px solid rgba(230, 0, 8, 0.36);
   border-radius: 999px;
-  padding: 5px 10px;
+  padding: 6px 11px;
   font-size: 12px;
-  color: var(--ag-text-soft);
-  background: var(--ag-btn-ghost-bg);
+  color: var(--ag-text-strong);
+  background: rgba(230, 0, 8, 0.14);
 }
 
 .home-grid {
@@ -130,7 +147,8 @@ onMounted(async () => {
 }
 
 .feature-card {
-  min-height: 178px;
+  min-height: 190px;
+  border-radius: 16px;
 }
 
 @media (max-width: 960px) {

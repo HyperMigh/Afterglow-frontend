@@ -32,7 +32,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <UiCard variant="hero" compact>
+  <UiCard variant="hero" compact class="mirror-hero">
     <p class="eyebrow">M6 AI Mirror</p>
     <h1>静一下</h1>
     <p class="subtitle">基于最近 24 小时内容，输出 summary / suggestion / question，并给出安全标记。</p>
@@ -103,21 +103,40 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.mirror-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.mirror-hero::after {
+  content: "";
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  right: -130px;
+  top: -180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 0, 8, 0.25), transparent 68%);
+}
+
 .mirror-latest {
   display: grid;
-  gap: 10px;
+  gap: 11px;
 }
 
 .mirror-block {
   border: 1px solid var(--ag-border-soft);
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 11px;
   background: var(--ag-btn-ghost-bg);
+  border-left: 2px solid rgba(230, 0, 8, 0.58);
 }
 
 .mirror-block h3 {
   margin: 0 0 6px;
-  font-size: 14px;
+  font-size: 18px;
+  text-transform: uppercase;
+  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
 }
 
 .mirror-block p {
@@ -130,14 +149,15 @@ onMounted(async () => {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 10px;
+  gap: 11px;
 }
 
 .history-card {
   border: 1px solid var(--ag-border-soft);
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 11px;
   background: var(--ag-btn-ghost-bg);
+  border-left: 2px solid rgba(230, 0, 8, 0.45);
 }
 
 .history-card header {

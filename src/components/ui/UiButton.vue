@@ -49,33 +49,42 @@ const classList = computed(() => [
 
 <style scoped>
 .ui-btn {
-  border-radius: 12px;
-  border: 1px solid transparent;
-  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--ag-border-soft);
+  padding: 10px 17px;
   font-weight: 700;
   font-size: 14px;
+  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   line-height: 1;
+  color: var(--ag-btn-ghost-text);
+  background: var(--ag-btn-ghost-bg);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   cursor: pointer;
-  transition: transform 0.2s ease, filter 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: transform 0.24s ease, filter 0.24s ease, border-color 0.24s ease, background 0.24s ease;
 }
 
 .ui-btn:hover:not(:disabled) {
   transform: translateY(-1px);
+  border-color: var(--ag-border-focus);
 }
 
 .ui-btn:disabled {
   opacity: 0.72;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .ui-btn--solid {
-  border-color: rgba(255, 201, 143, 0.24);
+  border-color: rgba(230, 0, 8, 0.75);
   color: var(--ag-btn-solid-text);
-  background: linear-gradient(130deg, var(--ag-accent-cool), var(--ag-accent-warm));
+  background: linear-gradient(140deg, var(--ag-accent-cool), var(--ag-accent-warm));
+  box-shadow: 0 12px 24px rgba(230, 0, 8, 0.28);
 }
 
 .ui-btn--solid:hover:not(:disabled) {
-  filter: brightness(1.03);
+  filter: brightness(1.06);
 }
 
 .ui-btn--ghost {
@@ -95,6 +104,7 @@ const classList = computed(() => [
   color: var(--ag-text);
   border-color: var(--ag-border-soft);
   background: transparent;
+  box-shadow: none;
 }
 
 .ui-btn--text:hover:not(:disabled) {
@@ -109,6 +119,7 @@ const classList = computed(() => [
   color: var(--ag-danger-text);
   border-color: var(--ag-danger-border);
   background: var(--ag-danger-bg);
+  box-shadow: none;
 }
 
 .ui-btn--danger:hover:not(:disabled) {
@@ -117,12 +128,12 @@ const classList = computed(() => [
 }
 
 .ui-btn--sm {
-  padding: 7px 11px;
-  font-size: 12px;
+  padding: 7px 13px;
+  font-size: 13px;
 }
 
 .ui-btn--md {
-  padding: 10px 16px;
+  padding: 10px 17px;
   font-size: 14px;
 }
 

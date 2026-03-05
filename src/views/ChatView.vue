@@ -98,7 +98,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <UiCard variant="hero" compact>
+  <UiCard variant="hero" compact class="chat-hero">
     <p class="eyebrow">M4 Chat</p>
     <h1>私聊会话</h1>
     <p class="subtitle">支持会话创建、消息历史、HTTP 兜底发送，以及 WebSocket 实时事件同步。</p>
@@ -215,6 +215,22 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.chat-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.chat-hero::after {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  right: -140px;
+  top: -200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 0, 8, 0.26), transparent 68%);
+}
+
 .chat-layout {
   display: grid;
   grid-template-columns: minmax(260px, 0.34fr) minmax(460px, 0.66fr);
@@ -233,6 +249,16 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-bottom: 8px;
+}
+
+.side-head h2,
+.main-head h2,
+.message-head h3 {
+  margin: 0;
+  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .quick-line {
@@ -255,7 +281,7 @@ onMounted(async () => {
 .conversation-btn {
   width: 100%;
   border: 1px solid var(--ag-border-soft);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--ag-btn-ghost-bg);
   color: var(--ag-text);
   text-align: left;
@@ -271,6 +297,7 @@ onMounted(async () => {
 .conversation-btn.active {
   border-color: var(--ag-border-focus);
   background: var(--ag-btn-ghost-bg-hover);
+  box-shadow: inset 0 0 0 1px rgba(230, 0, 8, 0.2);
 }
 
 .discover-btn small,
@@ -296,8 +323,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   font-style: normal;
-  color: var(--ag-btn-solid-text);
-  background: linear-gradient(130deg, var(--ag-accent-cool), var(--ag-accent-warm));
+  color: #ffffff;
+  background: linear-gradient(140deg, var(--ag-accent-cool), var(--ag-accent-warm));
 }
 
 .split {
@@ -322,15 +349,15 @@ onMounted(async () => {
 
 .bubble {
   margin: 0;
-  padding: 9px 11px;
-  border-radius: 12px;
+  padding: 9px 12px;
+  border-radius: 13px;
   border: 1px solid var(--ag-border-soft);
   background: var(--ag-btn-ghost-bg);
 }
 
 .message-list li.mine .bubble {
-  border-color: rgba(255, 201, 143, 0.55);
-  background: rgba(255, 201, 143, 0.16);
+  border-color: rgba(255, 109, 76, 0.64);
+  background: rgba(230, 0, 8, 0.18);
 }
 
 .message-list small {

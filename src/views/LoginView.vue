@@ -274,7 +274,7 @@ onUnmounted(() => {
 .auth-panel {
   position: relative;
   overflow: hidden;
-  border-radius: 26px;
+  border-radius: 28px;
   border: 1px solid var(--ag-border-strong);
   box-shadow: var(--ag-shadow-panel);
 }
@@ -297,7 +297,7 @@ onUnmounted(() => {
 
 .story-kicker {
   margin: 0;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   font-size: 12px;
   color: var(--ag-eyebrow);
@@ -329,9 +329,10 @@ onUnmounted(() => {
   grid-template-columns: 54px 1fr;
   gap: 10px;
   padding: 12px;
-  border-radius: 14px;
+  border-radius: 15px;
   border: 1px solid var(--ag-border-soft);
   background: var(--ag-btn-ghost-bg);
+  border-left: 2px solid rgba(230, 0, 8, 0.58);
 }
 
 .item-id {
@@ -341,13 +342,15 @@ onUnmounted(() => {
   height: 32px;
   border-radius: 999px;
   font-weight: 700;
-  color: #001d31;
-  background: linear-gradient(135deg, #9de9e2, #ffc88d);
+  color: #ffffff;
+  background: linear-gradient(140deg, #ff6d4c, #e60008);
 }
 
 .story-item h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 20px;
+  text-transform: uppercase;
+  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
 }
 
 .story-item p {
@@ -367,9 +370,9 @@ onUnmounted(() => {
   font-size: 12px;
   padding: 5px 10px;
   border-radius: 999px;
-  border: 1px solid var(--ag-border-soft);
-  background: var(--ag-btn-ghost-bg);
-  color: var(--ag-text-soft);
+  border: 1px solid rgba(230, 0, 8, 0.35);
+  background: rgba(230, 0, 8, 0.13);
+  color: var(--ag-text-strong);
 }
 
 .auth-panel {
@@ -380,14 +383,16 @@ onUnmounted(() => {
 .head-badge {
   margin: 0;
   font-size: 12px;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ag-eyebrow);
 }
 
 .auth-head h2 {
   margin: 8px 0 10px;
-  font-size: 30px;
+  font-size: 40px;
+  text-transform: uppercase;
+  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
 }
 
 .auth-head p {
@@ -419,8 +424,8 @@ onUnmounted(() => {
 
 .code-btn {
   padding: 0 14px;
-  min-width: 122px;
-  border-radius: 12px;
+  min-width: 126px;
+  border-radius: 999px;
 }
 
 .input-tip {
@@ -435,7 +440,7 @@ onUnmounted(() => {
 
 .submit-btn {
   margin-top: 2px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   font-size: 15px;
 }
 
@@ -446,9 +451,10 @@ onUnmounted(() => {
 .user-card {
   margin-top: 14px;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--ag-border-soft);
   background: var(--ag-btn-ghost-bg);
+  border-left: 2px solid rgba(230, 0, 8, 0.58);
 }
 
 .user-title {
