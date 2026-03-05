@@ -20,3 +20,9 @@ export async function fetchBlockList({ cursor = null, limit = 20 } = {}) {
   params.limit = limit;
   return apiClient.get("/users/block/list", { params });
 }
+
+export async function fetchDiscoverUsers({ limit = 20 } = {}) {
+  return apiClient.get("/users/discover", {
+    params: { limit }
+  });
+}

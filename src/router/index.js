@@ -3,6 +3,8 @@ import HomeView from "../views/HomeView.vue";
 import RoadmapView from "../views/RoadmapView.vue";
 import LoginView from "../views/LoginView.vue";
 import FeedView from "../views/FeedView.vue";
+import ChatView from "../views/ChatView.vue";
+import MirrorView from "../views/MirrorView.vue";
 import { getStoredAccessToken } from "../api/client";
 
 const routes = [
@@ -23,6 +25,22 @@ const routes = [
     path: "/feed",
     name: "feed",
     component: FeedView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: "/chat",
+    name: "chat",
+    component: ChatView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: "/mirror",
+    name: "mirror",
+    component: MirrorView,
     meta: {
       requiresAuth: true
     }

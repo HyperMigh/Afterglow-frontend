@@ -1,8 +1,9 @@
 <script setup>
-import { computed, onMounted, reactive } from "vue";
+import { computed, onMounted, reactive, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useFeedStore } from "../stores/feed";
 import { useReportStore } from "../stores/report";
+import { useEmotionStore } from "../stores/emotion";
 import UiButton from "../components/ui/UiButton.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import UiInput from "../components/ui/UiInput.vue";
@@ -10,6 +11,7 @@ import UiStatus from "../components/ui/UiStatus.vue";
 
 const feedStore = useFeedStore();
 const reportStore = useReportStore();
+const emotionStore = useEmotionStore();
 const { posts, loading, loadingMore, hasMore, publishing, error } = storeToRefs(feedStore);
 const { submittingTargetKeyMap, feedbackByTargetKey } = storeToRefs(reportStore);
 
@@ -28,6 +30,22 @@ const canPublish = computed(() => contentLength.value > 0 && contentLength.value
 const postCount = computed(() => posts.value.length);
 const totalLikeCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.likeCount || 0), 0));
 const totalCommentCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.commentCount || 0), 0));
+
+function postCardStyle(postId) {
+  const palette = emotionStore.paletteByTargetKey[`post-${postId}`]?.palette;
+  const stops = palette?.bg?.stops;
+  if (!Array.isArray(stops) || stops.length < 2) {
+    return {};
+  }
+  const angle = Number(palette?.bg?.angle || 135);
+  return {
+    background: `linear-gradient(${angle}deg, ${stops.join(", ")})`
+  };
+}
+
+function postPaletteSource(postId) {
+  return emotionStore.paletteByTargetKey[`post-${postId}`]?.source || "";
+}
 
 function formatDateTime(value) {
   if (!value) {
@@ -143,6 +161,16 @@ async function onLoadMoreComments(postId) {
 onMounted(async () => {
   await feedStore.loadFirstPage();
 });
+
+watch(
+  posts,
+  (rows) => {
+    rows.forEach((post) => {
+      emotionStore.loadPalette("post", post.postId).catch(() => {});
+    });
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -221,13 +249,14 @@ onMounted(async () => {
       <UiStatus v-else-if="error" tone="error">{{ error }}</UiStatus>
       <UiStatus v-else-if="!posts.length" tone="muted">还没有帖子，发布第一条内容吧。</UiStatus>
 
-      <div v-for="post in posts" :key="post.postId" class="feed-card timeline-card">
+      <div v-for="post in posts" :key="post.postId" class="feed-card timeline-card" :style="postCardStyle(post.postId)">
         <header class="feed-card-head">
           <div>
             <div class="feed-author">
               <strong>{{ post.authorName || "匿名用户" }}</strong>
               <span v-if="post.anonymous" class="tag">匿名</span>
               <span v-if="post.mine" class="tag mine">我的</span>
+              <span v-if="postPaletteSource(post.postId)" class="tag">palette: {{ postPaletteSource(post.postId) }}</span>
             </div>
             <small class="muted">{{ formatDateTime(post.createdAt) }}</small>
           </div>

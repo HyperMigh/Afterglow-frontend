@@ -62,6 +62,8 @@ onMounted(async () => {
       </UiButton>
       <UiButton v-if="authed" variant="ghost" @click="router.push('/feed')">进入社区</UiButton>
       <UiButton v-else variant="ghost" @click="router.push('/login')">去登录</UiButton>
+      <UiButton v-if="authed" variant="ghost" @click="router.push('/chat')">进入私聊</UiButton>
+      <UiButton v-if="authed" variant="ghost" @click="router.push('/mirror')">打开静一下</UiButton>
       <UiButton variant="ghost" @click="router.push('/roadmap')">查看路线图</UiButton>
     </div>
 

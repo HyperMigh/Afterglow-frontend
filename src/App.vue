@@ -38,6 +38,8 @@ onMounted(async () => {
       <nav class="links" aria-label="主导航">
         <RouterLink to="/" class="nav-link">首页</RouterLink>
         <RouterLink to="/feed" class="nav-link">社区</RouterLink>
+        <RouterLink to="/chat" class="nav-link">私聊</RouterLink>
+        <RouterLink to="/mirror" class="nav-link">静一下</RouterLink>
         <RouterLink to="/roadmap" class="nav-link">开发路线</RouterLink>
         <RouterLink to="/login" class="nav-link">登录</RouterLink>
       </nav>
