@@ -1,10 +1,16 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import {
   clearStoredAccessToken,
   getStoredAccessToken,
   setStoredAccessToken
 } from "../api/client";
-import { fetchMe, loginByEmailCode, sendEmailCode } from "../api/modules/auth";
+import {
+  fetchCaptcha,
+  fetchMe,
+  loginByEmailCode,
+  registerByEmailCode,
+  sendEmailCode
+} from "../api/modules/auth";
 
 function normalizeErrorMessage(error, fallbackText) {
   if (!error) {
@@ -20,30 +26,45 @@ export const useAuthStore = defineStore("auth", {
     loading: false,
     sendingCode: false,
     loggingIn: false,
+    registering: false,
+    captchaLoading: false,
     error: null
   }),
   getters: {
     isAuthenticated: (state) => Boolean(state.token)
   },
   actions: {
-    async sendCode(email) {
+    async loadCaptcha() {
+      this.captchaLoading = true;
+      this.error = null;
+      try {
+        return await fetchCaptcha();
+      } catch (error) {
+        this.error = normalizeErrorMessage(error, "获取图形验证码失败");
+        throw error;
+      } finally {
+        this.captchaLoading = false;
+      }
+    },
+
+    async sendCode(payload) {
       this.sendingCode = true;
       this.error = null;
       try {
-        return await sendEmailCode({ email });
+        return await sendEmailCode(payload);
       } catch (error) {
-        this.error = normalizeErrorMessage(error, "发送验证码失败");
+        this.error = normalizeErrorMessage(error, "发送邮箱验证码失败");
         throw error;
       } finally {
         this.sendingCode = false;
       }
     },
 
-    async login(email, code) {
+    async login(payload) {
       this.loggingIn = true;
       this.error = null;
       try {
-        const result = await loginByEmailCode({ email, code });
+        const result = await loginByEmailCode(payload);
         this.token = result.accessToken;
         setStoredAccessToken(result.accessToken);
         this.me = result.user;
@@ -53,6 +74,23 @@ export const useAuthStore = defineStore("auth", {
         throw error;
       } finally {
         this.loggingIn = false;
+      }
+    },
+
+    async register(payload) {
+      this.registering = true;
+      this.error = null;
+      try {
+        const result = await registerByEmailCode(payload);
+        this.token = result.accessToken;
+        setStoredAccessToken(result.accessToken);
+        this.me = result.user;
+        return result;
+      } catch (error) {
+        this.error = normalizeErrorMessage(error, "注册失败");
+        throw error;
+      } finally {
+        this.registering = false;
       }
     },
 

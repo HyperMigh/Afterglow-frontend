@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
@@ -9,13 +9,22 @@ import UiInput from "../components/ui/UiInput.vue";
 import UiStatus from "../components/ui/UiStatus.vue";
 
 const authStore = useAuthStore();
-const { isAuthenticated, me, sendingCode, loggingIn } = storeToRefs(authStore);
+const { isAuthenticated, me, sendingCode, loggingIn, registering, captchaLoading } = storeToRefs(authStore);
 const router = useRouter();
 const route = useRoute();
 
+const mode = ref("login");
+
 const form = reactive({
   email: "",
-  code: ""
+  code: "",
+  captchaCode: ""
+});
+
+const captcha = reactive({
+  captchaId: "",
+  imageData: "",
+  expireSeconds: 0
 });
 
 const feedback = reactive({
@@ -29,38 +38,38 @@ let cooldownTimer = null;
 const inspirationTracks = [
   {
     id: "01",
-    title: "首屏叙事感",
-    description: "借鉴 Awwwards、CSS Design Awards 的思路，让登录页先建立情绪，再进入操作。"
+    title: "双重验证",
+    description: "登录和注册都要通过图形验证码 + 邮箱验证码，防止批量请求和撞库。"
   },
   {
     id: "02",
-    title: "操作路径极短",
-    description: "参考 Mobbin、Collect UI 的高转化结构，把邮箱+验证码压缩到一屏闭环。"
+    title: "注册登录分离",
+    description: "注册仅允许新邮箱，登录仅允许已注册邮箱，不再自动建号。"
   },
   {
     id: "03",
-    title: "可见反馈",
-    description: "吸收 Dribbble、Behance 常见微交互，按钮状态和消息提示都即时可见。"
+    title: "全链路鉴权",
+    description: "除认证接口外，其余 API 均要求携带有效登录令牌。"
   }
 ];
 
-const inspirationTags = [
-  "Awwwards",
-  "CSS Design Awards",
-  "Behance",
-  "Dribbble",
-  "Mobbin",
-  "Collect UI"
-];
+const inspirationTags = ["Captcha", "Email OTP", "Register", "Login", "Token Guard", "Security"];
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE_PATTERN = /^\d{4,8}$/;
+const CAPTCHA_PATTERN = /^[A-Za-z0-9]{4,8}$/;
 
+const isLoginMode = computed(() => mode.value === "login");
 const isEmailValid = computed(() => EMAIL_PATTERN.test(form.email.trim()));
 const isCodeValid = computed(() => CODE_PATTERN.test(form.code.trim()));
-const canSendCode = computed(() => isEmailValid.value && cooldown.value <= 0 && !sendingCode.value);
-const canLogin = computed(() => isEmailValid.value && isCodeValid.value && !loggingIn.value);
+const isCaptchaValid = computed(() => CAPTCHA_PATTERN.test(form.captchaCode.trim()));
+const submitLoading = computed(() => (isLoginMode.value ? loggingIn.value : registering.value));
+const canSendCode = computed(
+  () => isEmailValid.value && isCaptchaValid.value && cooldown.value <= 0 && !sendingCode.value && !captchaLoading.value
+);
+const canSubmit = computed(() => isEmailValid.value && isCodeValid.value && isCaptchaValid.value && !submitLoading.value);
 const feedbackTone = computed(() => (feedback.message ? feedback.type : "muted"));
+
 const sendCodeButtonText = computed(() => {
   if (sendingCode.value) {
     return "发送中...";
@@ -68,8 +77,22 @@ const sendCodeButtonText = computed(() => {
   if (cooldown.value > 0) {
     return `重新发送 (${cooldown.value}s)`;
   }
-  return "获取验证码";
+  return "获取邮箱验证码";
 });
+
+const submitButtonText = computed(() => {
+  if (submitLoading.value) {
+    return isLoginMode.value ? "登录中..." : "注册中...";
+  }
+  return isLoginMode.value ? "立即登录" : "立即注册";
+});
+
+const headTitle = computed(() => (isLoginMode.value ? "欢迎登录" : "创建账号"));
+const headDesc = computed(() =>
+  isLoginMode.value
+    ? "请输入邮箱验证码与图形验证码，验证通过后进入系统。"
+    : "使用邮箱验证码完成注册，同时进行图形验证码校验。"
+);
 
 function setFeedback(type, message) {
   feedback.type = type;
@@ -97,7 +120,24 @@ function normalizeRedirect() {
   if (typeof redirect === "string" && redirect.startsWith("/")) {
     return redirect;
   }
-  return "/feed";
+  return "/";
+}
+
+async function refreshCaptcha() {
+  try {
+    const result = await authStore.loadCaptcha();
+    captcha.captchaId = result.captchaId;
+    captcha.imageData = result.imageData;
+    captcha.expireSeconds = Number(result.expireSeconds || 0);
+  } catch (error) {
+    setFeedback("error", authStore.error || error.message || "获取图形验证码失败");
+  }
+}
+
+function switchMode(nextMode) {
+  mode.value = nextMode;
+  form.code = "";
+  setFeedback("info", nextMode === "login" ? "当前为登录模式" : "当前为注册模式");
 }
 
 async function onSendCode() {
@@ -105,31 +145,64 @@ async function onSendCode() {
     setFeedback("error", "请输入正确的邮箱地址");
     return;
   }
+  if (!captcha.captchaId || !isCaptchaValid.value) {
+    setFeedback("error", "请输入图形验证码");
+    return;
+  }
+
   try {
-    const result = await authStore.sendCode(form.email.trim());
+    const result = await authStore.sendCode({
+      email: form.email.trim(),
+      captchaId: captcha.captchaId,
+      captchaCode: form.captchaCode.trim(),
+      scene: mode.value
+    });
     const cooldownSeconds = Math.min(90, Math.max(30, Number(result.expireSeconds) || 60));
     startCooldown(cooldownSeconds);
-    setFeedback("success", `验证码已发送，有效期 ${result.expireSeconds} 秒`);
+    setFeedback("success", `邮箱验证码已发送，有效期 ${result.expireSeconds} 秒`);
+    form.captchaCode = "";
+    await refreshCaptcha();
   } catch (error) {
     setFeedback("error", authStore.error || error.message || "发送验证码失败");
+    form.captchaCode = "";
+    await refreshCaptcha();
   }
 }
 
-async function onLogin() {
+async function onSubmit() {
   if (!isEmailValid.value) {
     setFeedback("error", "请输入正确的邮箱地址");
     return;
   }
   if (!isCodeValid.value) {
-    setFeedback("error", "验证码必须是 4~8 位数字");
+    setFeedback("error", "邮箱验证码必须是 4~8 位数字");
     return;
   }
+  if (!captcha.captchaId || !isCaptchaValid.value) {
+    setFeedback("error", "请输入图形验证码");
+    return;
+  }
+
+  const payload = {
+    email: form.email.trim(),
+    code: form.code.trim(),
+    captchaId: captcha.captchaId,
+    captchaCode: form.captchaCode.trim()
+  };
+
   try {
-    await authStore.login(form.email.trim(), form.code.trim());
-    setFeedback("success", "登录成功，正在跳转...");
+    if (isLoginMode.value) {
+      await authStore.login(payload);
+      setFeedback("success", "登录成功，正在跳转...");
+    } else {
+      await authStore.register(payload);
+      setFeedback("success", "注册成功，正在跳转...");
+    }
     await router.replace(normalizeRedirect());
   } catch (error) {
-    setFeedback("error", authStore.error || error.message || "登录失败");
+    setFeedback("error", authStore.error || error.message || (isLoginMode.value ? "登录失败" : "注册失败"));
+    form.captchaCode = "";
+    await refreshCaptcha();
   }
 }
 
@@ -148,8 +221,9 @@ async function ensureMe() {
   }
 }
 
-onMounted(() => {
-  ensureMe();
+onMounted(async () => {
+  await ensureMe();
+  await refreshCaptcha();
 });
 
 onUnmounted(() => {
@@ -164,9 +238,9 @@ onUnmounted(() => {
   <section class="login-stage">
     <UiCard as="article" variant="panel" class="story-panel reveal reveal-1">
       <p class="story-kicker">Afterglow Access</p>
-      <h1>让「登录」从表单动作，变成有记忆点的开场。</h1>
+      <h1>登录与注册统一升级为邮箱 + 图形验证码双重验证</h1>
       <p class="story-subtitle">
-        这个版本基于你给的灵感站点文章做了提炼：先建立品牌情绪，再缩短操作路径，最后用即时反馈保证可用性。
+        认证模块现在分离登录和注册流程，前后端都加入图形验证码校验，并对全部业务接口启用登录态拦截。
       </p>
 
       <ul class="story-list">
@@ -186,12 +260,16 @@ onUnmounted(() => {
 
     <UiCard as="article" variant="panel" class="auth-panel reveal reveal-2">
       <header class="auth-head">
-        <p class="head-badge">Email Code Login</p>
-        <h2>欢迎回来</h2>
-        <p>输入邮箱并验证，即可继续访问社区动态与互动模块。</p>
+        <div class="mode-tabs" role="tablist" aria-label="认证模式">
+          <button class="mode-tab" :class="{ active: isLoginMode }" @click="switchMode('login')">登录</button>
+          <button class="mode-tab" :class="{ active: !isLoginMode }" @click="switchMode('register')">注册</button>
+        </div>
+        <p class="head-badge">Email + Captcha</p>
+        <h2>{{ headTitle }}</h2>
+        <p>{{ headDesc }}</p>
       </header>
 
-      <form class="auth-form" @submit.prevent="onLogin">
+      <form class="auth-form" @submit.prevent="onSubmit">
         <label class="input-group">
           <span>邮箱</span>
           <UiInput
@@ -203,12 +281,12 @@ onUnmounted(() => {
             @update:model-value="(value) => (form.email = value)"
           />
           <small class="input-tip" :class="{ error: form.email && !isEmailValid }">
-            {{ form.email && !isEmailValid ? "邮箱格式不正确" : "用于发送一次性登录验证码" }}
+            {{ form.email && !isEmailValid ? "邮箱格式不正确" : "邮箱用于发送验证码" }}
           </small>
         </label>
 
         <label class="input-group">
-          <span>验证码</span>
+          <span>邮箱验证码</span>
           <div class="code-line">
             <UiInput
               :model-value="form.code"
@@ -217,24 +295,46 @@ onUnmounted(() => {
               placeholder="4~8 位数字"
               maxlength="8"
               @update:model-value="(value) => (form.code = value)"
-              @keyup.enter="onLogin"
+              @keyup.enter="onSubmit"
             />
             <UiButton type="button" class="code-btn" :disabled="!canSendCode" @click="onSendCode">
               {{ sendCodeButtonText }}
             </UiButton>
           </div>
-          <small class="input-tip" :class="{ error: form.code && !isCodeValid }">
-            {{ form.code && !isCodeValid ? "验证码必须是 4~8 位数字" : "本地开发时验证码会出现在后端日志" }}
+        </label>
+
+        <label class="input-group">
+          <span>图形验证码</span>
+          <div class="captcha-line">
+            <UiInput
+              :model-value="form.captchaCode"
+              :invalid="form.captchaCode && !isCaptchaValid"
+              type="text"
+              placeholder="输入图形验证码"
+              maxlength="8"
+              @update:model-value="(value) => (form.captchaCode = value)"
+            />
+            <button type="button" class="captcha-image-btn" @click="refreshCaptcha">
+              <img v-if="captcha.imageData" :src="captcha.imageData" alt="图形验证码" class="captcha-image" />
+              <span v-else class="captcha-fallback">点击获取</span>
+            </button>
+          </div>
+          <small class="input-tip" :class="{ error: form.captchaCode && !isCaptchaValid }">
+            {{
+              form.captchaCode && !isCaptchaValid
+                ? "图形验证码应为 4~8 位字母数字"
+                : `看不清可点击图片刷新${captcha.expireSeconds ? `（${captcha.expireSeconds}s 过期）` : ""}`
+            }}
           </small>
         </label>
 
-        <UiButton class="submit-btn" type="submit" :disabled="!canLogin">
-          {{ loggingIn ? "登录中..." : "进入 Afterglow" }}
+        <UiButton class="submit-btn" type="submit" :disabled="!canSubmit">
+          {{ submitButtonText }}
         </UiButton>
       </form>
 
       <UiStatus class="feedback-text" :tone="feedbackTone">
-        {{ feedback.message || "首次登录会自动创建账号，后续可在用户模块完善资料。" }}
+        {{ feedback.message || "请先获取邮箱验证码，再完成登录或注册。" }}
       </UiStatus>
 
       <div v-if="isAuthenticated" class="user-card">
@@ -243,21 +343,9 @@ onUnmounted(() => {
         <p><strong>邮箱</strong><span>{{ me?.email || "-" }}</span></p>
         <p><strong>昵称</strong><span>{{ me?.nickname || "-" }}</span></p>
         <div class="action-row">
-          <UiButton type="button" variant="ghost" size="sm" class="secondary-btn" @click="router.push('/feed')">
-            进入 Feed
-          </UiButton>
-          <UiButton type="button" variant="ghost" size="sm" class="secondary-btn" @click="onLogout">
-            退出登录
-          </UiButton>
+          <UiButton type="button" variant="ghost" size="sm" class="secondary-btn" @click="router.push('/')">进入系统</UiButton>
+          <UiButton type="button" variant="ghost" size="sm" class="secondary-btn" @click="onLogout">退出登录</UiButton>
         </div>
-      </div>
-      <div v-else class="action-row">
-        <UiButton type="button" variant="ghost" size="sm" class="secondary-btn" @click="router.push('/')">
-          返回首页
-        </UiButton>
-        <UiButton type="button" variant="ghost" size="sm" class="secondary-btn" @click="router.push('/roadmap')">
-          查看路线图
-        </UiButton>
       </div>
     </UiCard>
   </section>
@@ -380,8 +468,31 @@ onUnmounted(() => {
   background: var(--ag-login-auth-bg, var(--ag-surface-panel));
 }
 
+.mode-tabs {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid var(--ag-border-soft);
+  overflow: hidden;
+}
+
+.mode-tab {
+  border: none;
+  background: transparent;
+  color: var(--ag-text-soft);
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: "Barlow Condensed", "Noto Sans SC", sans-serif;
+  font-size: 15px;
+  text-transform: uppercase;
+}
+
+.mode-tab.active {
+  background: linear-gradient(140deg, #ff6d4c, #e60008);
+  color: #ffffff;
+}
+
 .head-badge {
-  margin: 0;
+  margin: 10px 0 0;
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -416,16 +527,44 @@ onUnmounted(() => {
   color: var(--ag-text-soft);
 }
 
-.code-line {
+.code-line,
+.captcha-line {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
 }
 
 .code-btn {
-  padding: 0 14px;
   min-width: 126px;
   border-radius: 999px;
+}
+
+.captcha-image-btn {
+  border: 1px solid var(--ag-border-soft);
+  border-radius: 12px;
+  padding: 0;
+  width: 122px;
+  height: 42px;
+  background: var(--ag-btn-ghost-bg);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.captcha-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.captcha-fallback {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--ag-text-muted);
+  font-size: 12px;
 }
 
 .input-tip {
@@ -527,12 +666,14 @@ onUnmounted(() => {
     padding: 20px 18px;
   }
 
-  .code-line {
+  .code-line,
+  .captcha-line {
     grid-template-columns: 1fr;
   }
 
   .code-btn,
-  .submit-btn {
+  .submit-btn,
+  .captcha-image-btn {
     width: 100%;
     min-height: 42px;
   }

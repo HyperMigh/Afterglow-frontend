@@ -11,7 +11,10 @@ const routes = [
   {
     path: "/",
     name: "home",
-    component: HomeView
+    component: HomeView,
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path: "/roadmap",
