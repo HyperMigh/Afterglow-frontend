@@ -3,6 +3,7 @@ import { computed, onMounted, reactive } from "vue";
 import { storeToRefs } from "pinia";
 import { useFeedStore } from "../stores/feed";
 import { useReportStore } from "../stores/report";
+import { useI18n } from "../composables/useI18n";
 import UiButton from "../components/ui/UiButton.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import UiInput from "../components/ui/UiInput.vue";
@@ -10,6 +11,7 @@ import UiStatus from "../components/ui/UiStatus.vue";
 
 const feedStore = useFeedStore();
 const reportStore = useReportStore();
+const { t } = useI18n();
 const { posts, loading, loadingMore, hasMore, publishing, error } = storeToRefs(feedStore);
 const { submittingTargetKeyMap, feedbackByTargetKey } = storeToRefs(reportStore);
 
@@ -28,13 +30,14 @@ const canPublish = computed(() => contentLength.value > 0 && contentLength.value
 const postCount = computed(() => posts.value.length);
 const totalLikeCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.likeCount || 0), 0));
 const totalCommentCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.commentCount || 0), 0));
+const reportReasonOptions = computed(() => t("feed.reportReasons") || []);
 
 function formatDateTime(value) {
   if (!value) {
     return "-";
   }
   const date = new Date(value);
-  return date.toLocaleString("zh-CN", { hour12: false });
+  return date.toLocaleString(t("feed.dateLocale"), { hour12: false });
 }
 
 function parseMediaUrls(raw) {
@@ -148,45 +151,43 @@ onMounted(async () => {
 <template>
   <UiCard variant="hero" compact class="feed-hero">
     <p class="eyebrow">M2 Feed</p>
-    <h1>社区时间线</h1>
-    <p class="subtitle">
-      已接入发帖、评论、点赞、举报和游标分页。当前阶段重点是提升交互连贯性与信息可读性。
-    </p>
+    <h1>{{ t("feed.heroTitle") }}</h1>
+    <p class="subtitle">{{ t("feed.heroSubtitle") }}</p>
     <div class="feed-stats">
-      <span class="feed-stat">帖子 {{ postCount }}</span>
-      <span class="feed-stat">点赞 {{ totalLikeCount }}</span>
-      <span class="feed-stat">评论 {{ totalCommentCount }}</span>
-      <span class="feed-stat">{{ hasMore ? "支持继续加载" : "已到末尾" }}</span>
+      <span class="feed-stat">{{ t("feed.statPosts") }} {{ postCount }}</span>
+      <span class="feed-stat">{{ t("feed.statLikes") }} {{ totalLikeCount }}</span>
+      <span class="feed-stat">{{ t("feed.statComments") }} {{ totalCommentCount }}</span>
+      <span class="feed-stat">{{ hasMore ? t("feed.statHasMore") : t("feed.statNoMore") }}</span>
     </div>
   </UiCard>
 
   <section class="grid single">
     <UiCard as="article" variant="panel" class="composer-panel">
       <div class="composer-head">
-        <h2>发布帖子</h2>
-        <p class="muted">表达你的想法、近况或问题，支持附带图片链接。</p>
+        <h2>{{ t("feed.composerTitle") }}</h2>
+        <p class="muted">{{ t("feed.composerSubtitle") }}</p>
       </div>
 
       <div class="form-grid">
         <label class="field">
-          <span>内容（最多 2000 字）</span>
+          <span>{{ t("feed.contentLabel") }}</span>
           <UiInput
             multiline
             class="textarea"
             :model-value="composer.content"
-            placeholder="分享你此刻的想法..."
+            :placeholder="t('feed.contentPlaceholder')"
             @update:model-value="(value) => (composer.content = value)"
           />
           <small class="hint" :class="{ error: contentLength > 2000 }">{{ contentLength }}/2000</small>
         </label>
         <label class="field">
-          <span>图片 URL（可选，每行一个）</span>
+          <span>{{ t("feed.mediaLabel") }}</span>
           <UiInput
             multiline
             :rows="4"
             class="textarea small"
             :model-value="composer.mediaRaw"
-            placeholder="https://example.com/a.png"
+            :placeholder="t('feed.mediaPlaceholder')"
             @update:model-value="(value) => (composer.mediaRaw = value)"
           />
         </label>
@@ -196,15 +197,15 @@ onMounted(async () => {
             :checked="composer.isAnonymous"
             @change="(event) => (composer.isAnonymous = event.target.checked)"
           />
-          <span>匿名发布</span>
+          <span>{{ t("feed.anonymousPublish") }}</span>
         </label>
       </div>
       <div class="hero-actions row-actions">
         <UiButton :disabled="!canPublish" @click="onPublishPost">
-          {{ publishing ? "发布中..." : "发布帖子" }}
+          {{ publishing ? t("feed.publishing") : t("feed.publishPost") }}
         </UiButton>
         <UiButton variant="ghost" :disabled="loading" @click="feedStore.loadFirstPage">
-          刷新时间线
+          {{ t("feed.refreshTimeline") }}
         </UiButton>
       </div>
     </UiCard>
@@ -213,25 +214,25 @@ onMounted(async () => {
   <section class="grid single">
     <UiCard as="article" variant="panel" class="timeline-panel">
       <div class="timeline-head">
-        <h2>帖子列表</h2>
-        <UiButton variant="text" :disabled="loading" @click="feedStore.loadFirstPage">重新加载</UiButton>
+        <h2>{{ t("feed.postListTitle") }}</h2>
+        <UiButton variant="text" :disabled="loading" @click="feedStore.loadFirstPage">{{ t("feed.reload") }}</UiButton>
       </div>
 
-      <UiStatus v-if="loading" tone="info">正在加载时间线...</UiStatus>
+      <UiStatus v-if="loading" tone="info">{{ t("feed.loadingTimeline") }}</UiStatus>
       <UiStatus v-else-if="error" tone="error">{{ error }}</UiStatus>
-      <UiStatus v-else-if="!posts.length" tone="muted">还没有帖子，发布第一条内容吧。</UiStatus>
+      <UiStatus v-else-if="!posts.length" tone="muted">{{ t("feed.emptyPosts") }}</UiStatus>
 
       <div v-for="post in posts" :key="post.postId" class="feed-card timeline-card">
         <header class="feed-card-head">
           <div>
             <div class="feed-author">
-              <strong>{{ post.authorName || "匿名用户" }}</strong>
-              <span v-if="post.anonymous" class="tag">匿名</span>
-              <span v-if="post.mine" class="tag mine">我的</span>
+              <strong>{{ post.authorName || t("feed.anonymousUser") }}</strong>
+              <span v-if="post.anonymous" class="tag">{{ t("feed.tagAnonymous") }}</span>
+              <span v-if="post.mine" class="tag mine">{{ t("feed.tagMine") }}</span>
             </div>
             <small class="muted">{{ formatDateTime(post.createdAt) }}</small>
           </div>
-          <UiButton v-if="post.mine" variant="danger" size="sm" @click="onDeletePost(post.postId)">删除</UiButton>
+          <UiButton v-if="post.mine" variant="danger" size="sm" @click="onDeletePost(post.postId)">{{ t("feed.delete") }}</UiButton>
         </header>
 
         <p class="feed-content">{{ post.content }}</p>
@@ -242,36 +243,33 @@ onMounted(async () => {
         </ul>
 
         <div class="feed-actions">
-          <UiButton variant="text" size="sm" @click="onLikePost(post.postId)">点赞 {{ post.likeCount || 0 }}</UiButton>
+          <UiButton variant="text" size="sm" @click="onLikePost(post.postId)">{{ t("feed.like") }} {{ post.likeCount || 0 }}</UiButton>
           <UiButton variant="text" size="sm" @click="onToggleComments(post.postId)">
-            {{ isCommentPanelOpen(post.postId) ? "收起评论" : "评论" }} {{ post.commentCount || 0 }}
+            {{ isCommentPanelOpen(post.postId) ? t("feed.collapseComments") : t("feed.comments") }} {{ post.commentCount || 0 }}
           </UiButton>
           <UiButton variant="text" size="sm" @click="onToggleReport('post', post.postId)">
-            {{ isReportPanelOpen("post", post.postId) ? "收起举报" : "举报" }}
+            {{ isReportPanelOpen("post", post.postId) ? t("feed.collapseReport") : t("feed.report") }}
           </UiButton>
         </div>
 
         <div v-if="isReportPanelOpen('post', post.postId)" class="report-panel">
           <div class="form-grid">
             <label class="field">
-              <span>举报原因</span>
+              <span>{{ t("feed.reportReasonLabel") }}</span>
               <select
                 class="input"
                 :value="ensureReportForm('post', post.postId).reason"
                 @change="(event) => (ensureReportForm('post', post.postId).reason = event.target.value)"
               >
-                <option value="spam">垃圾信息</option>
-                <option value="abuse">辱骂攻击</option>
-                <option value="violent">暴力内容</option>
-                <option value="other">其他</option>
+                <option v-for="item in reportReasonOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
               </select>
             </label>
             <label class="field">
-              <span>补充说明（可选）</span>
+              <span>{{ t("feed.reportDetailLabel") }}</span>
               <textarea
                 class="textarea small"
                 :value="ensureReportForm('post', post.postId).detail"
-                placeholder="补充更多上下文，帮助快速处理"
+                :placeholder="t('feed.reportDetailPlaceholder')"
                 @input="(event) => (ensureReportForm('post', post.postId).detail = event.target.value)"
               />
             </label>
@@ -282,7 +280,7 @@ onMounted(async () => {
               :disabled="isReportSubmitting('post', post.postId)"
               @click="onSubmitReport('post', post.postId)"
             >
-              {{ isReportSubmitting("post", post.postId) ? "提交中..." : "提交举报" }}
+              {{ isReportSubmitting("post", post.postId) ? t("feed.reportSubmitting") : t("feed.submitReport") }}
             </UiButton>
           </div>
           <UiStatus v-if="getReportFeedback('post', post.postId)" tone="muted">
@@ -295,7 +293,7 @@ onMounted(async () => {
             <UiInput
               class="input"
               :model-value="feedStore.commentDrafts[post.postId] || ''"
-              placeholder="写下你的评论..."
+              :placeholder="t('feed.commentPlaceholder')"
               @update:model-value="(value) => feedStore.setCommentDraft(post.postId, value)"
               @keyup.enter="onSubmitComment(post.postId)"
             />
@@ -304,12 +302,12 @@ onMounted(async () => {
               :disabled="feedStore.commentSubmittingByPost[post.postId]"
               @click="onSubmitComment(post.postId)"
             >
-              {{ feedStore.commentSubmittingByPost[post.postId] ? "发送中..." : "发送" }}
+              {{ feedStore.commentSubmittingByPost[post.postId] ? t("feed.sending") : t("feed.send") }}
             </UiButton>
           </div>
 
-          <UiStatus v-if="feedStore.commentLoadingByPost[post.postId]" tone="muted">正在加载评论...</UiStatus>
-          <UiStatus v-else-if="!(feedStore.commentsByPost[post.postId] || []).length" tone="muted">暂无评论</UiStatus>
+          <UiStatus v-if="feedStore.commentLoadingByPost[post.postId]" tone="muted">{{ t("feed.loadingComments") }}</UiStatus>
+          <UiStatus v-else-if="!(feedStore.commentsByPost[post.postId] || []).length" tone="muted">{{ t("feed.noComments") }}</UiStatus>
 
           <ul class="comment-list">
             <li v-for="comment in feedStore.commentsByPost[post.postId] || []" :key="comment.commentId">
@@ -327,14 +325,14 @@ onMounted(async () => {
             :disabled="feedStore.commentLoadingByPost[post.postId]"
             @click="onLoadMoreComments(post.postId)"
           >
-            加载更多评论
+            {{ t("feed.loadMoreComments") }}
           </UiButton>
         </div>
       </div>
 
       <div class="hero-actions">
         <UiButton v-if="hasMore" variant="ghost" :disabled="loadingMore" @click="feedStore.loadMore">
-          {{ loadingMore ? "加载中..." : "加载更多" }}
+          {{ loadingMore ? t("feed.loadingMore") : t("feed.loadMore") }}
         </UiButton>
       </div>
     </UiCard>

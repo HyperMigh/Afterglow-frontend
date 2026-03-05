@@ -1,8 +1,9 @@
-﻿<script setup>
+<script setup>
 import { computed, onUnmounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../stores/auth";
+import { useI18n } from "../composables/useI18n";
 import UiButton from "../components/ui/UiButton.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import UiInput from "../components/ui/UiInput.vue";
@@ -19,6 +20,7 @@ const props = defineProps({
 });
 
 const authStore = useAuthStore();
+const { t, isEnglish, toggleLocale } = useI18n();
 const { sendingCode, loggingIn, registering } = storeToRefs(authStore);
 const router = useRouter();
 const route = useRoute();
@@ -56,12 +58,16 @@ const isCaptchaValid = computed(() => CAPTCHA_PATTERN.test(form.captchaCode.trim
 const submitLoading = computed(() => (isLoginMode.value ? loggingIn.value : registering.value));
 const canSendCode = computed(() => cooldown.value <= 0 && !sendingCode.value);
 const canSubmit = computed(() => isEmailValid.value && isCodeValid.value && isCaptchaValid.value && !submitLoading.value);
+const localeToggleLabel = computed(() => (isEnglish.value ? "中" : "EN"));
+const localeToggleAriaLabel = computed(() =>
+  isEnglish.value ? t("app.localeSwitchToChinese") : t("app.localeSwitchToEnglish")
+);
 
-const sceneTitle = computed(() => (isLoginMode.value ? "Welcome back" : "Create your account"));
+const sceneTitle = computed(() =>
+  isLoginMode.value ? t("authPortal.sceneTitleLogin") : t("authPortal.sceneTitleSignup")
+);
 const sceneDescription = computed(() =>
-  isLoginMode.value
-    ? "Use your email verification credentials to access your workspace."
-    : "Create an account with email verification in a secure and reliable flow."
+  isLoginMode.value ? t("authPortal.sceneDescLogin") : t("authPortal.sceneDescSignup")
 );
 
 const feedbackTone = computed(() => {
@@ -73,32 +79,30 @@ const feedbackTone = computed(() => {
 
 const sendCodeButtonText = computed(() => {
   if (sendingCode.value) {
-    return "Sending";
+    return t("authPortal.sendingCode");
   }
   if (cooldown.value > 0) {
-    return `Retry ${cooldown.value}s`;
+    return t("authPortal.retryCode", { seconds: cooldown.value });
   }
-  return "Send code";
+  return t("authPortal.sendCode");
 });
 
 const submitButtonText = computed(() => {
   if (submitLoading.value) {
-    return isLoginMode.value ? "Logging in" : "Creating account";
+    return isLoginMode.value ? t("authPortal.loggingIn") : t("authPortal.creatingAccount");
   }
-  return isLoginMode.value ? "Login" : "Sign up";
+  return isLoginMode.value ? t("authPortal.submitLogin") : t("authPortal.submitSignup");
 });
 
 const defaultFeedbackText = computed(() =>
-  isLoginMode.value
-    ? "Enter your 6-digit code and captcha to continue."
-    : "Complete verification details to finish registration."
+  isLoginMode.value ? t("authPortal.defaultFeedbackLogin") : t("authPortal.defaultFeedbackSignup")
 );
 
 const feedbackDisplayMessage = computed(() => {
   if (feedback.message === FEEDBACK_CODE_SENT) {
     return codeExpireRemaining.value > 0
-      ? `Verification code sent. ${codeExpireRemaining.value}s remaining.`
-      : "Verification code sent. Please complete validation soon.";
+      ? t("authPortal.codeSentWithRemaining", { seconds: codeExpireRemaining.value })
+      : t("authPortal.codeSentFallback");
   }
   return feedback.message || defaultFeedbackText.value;
 });
@@ -149,7 +153,7 @@ function startCodeExpireCountdown(seconds) {
       codeExpireRemaining.value = 0;
       clearCodeExpireTimer();
       if (feedback.message === FEEDBACK_CODE_SENT) {
-        setFeedback("info", "Code expired. Please request a new one.");
+        setFeedback("info", t("authPortal.codeExpired"));
       }
       return;
     }
@@ -172,14 +176,14 @@ async function refreshCaptcha() {
     captcha.imageData = result.imageData;
     captcha.expireSeconds = Number(result.expireSeconds || 0);
   } catch (error) {
-    setFeedback("error", authStore.error || error.message || "Failed to load captcha");
+    setFeedback("error", authStore.error || error.message || t("authPortal.loadCaptchaFailed"));
   }
 }
 
 async function resetForScene() {
   form.code = "";
   form.captchaCode = "";
-  setFeedback("info", isLoginMode.value ? "Login mode" : "Signup mode");
+  setFeedback("info", isLoginMode.value ? t("authPortal.modeLogin") : t("authPortal.modeSignup"));
   clearCooldownTimer();
   clearCodeExpireTimer();
   cooldown.value = 0;
@@ -189,7 +193,7 @@ async function resetForScene() {
 
 async function onSendCode() {
   if (!isEmailValid.value) {
-    setFeedback("error", "Please enter a valid email address");
+    setFeedback("error", t("authPortal.invalidEmail"));
     return;
   }
 
@@ -205,21 +209,21 @@ async function onSendCode() {
     startCodeExpireCountdown(expireSeconds);
     setFeedback("success", FEEDBACK_CODE_SENT);
   } catch (error) {
-    setFeedback("error", authStore.error || error.message || "Failed to send code");
+    setFeedback("error", authStore.error || error.message || t("authPortal.sendCodeFailed"));
   }
 }
 
 async function onSubmit() {
   if (!isEmailValid.value) {
-    setFeedback("error", "Please enter a valid email address");
+    setFeedback("error", t("authPortal.invalidEmail"));
     return;
   }
   if (!isCodeValid.value) {
-    setFeedback("error", "Verification code must be 6 digits");
+    setFeedback("error", t("authPortal.invalidCode"));
     return;
   }
   if (!captcha.captchaId || !isCaptchaValid.value) {
-    setFeedback("error", "Please enter the captcha code");
+    setFeedback("error", t("authPortal.invalidCaptcha"));
     return;
   }
 
@@ -233,21 +237,21 @@ async function onSubmit() {
   try {
     if (isLoginMode.value) {
       await authStore.login(payload);
-      setFeedback("success", "Login successful. Redirecting...");
+      setFeedback("success", t("authPortal.loginSuccess"));
     } else {
       await authStore.register(payload);
-      setFeedback("success", "Account created. Redirecting...");
+      setFeedback("success", t("authPortal.signupSuccess"));
     }
     await router.replace(normalizeRedirect());
   } catch (error) {
-    setFeedback("error", authStore.error || error.message || (isLoginMode.value ? "Login failed" : "Signup failed"));
+    setFeedback("error", authStore.error || error.message || (isLoginMode.value ? t("authPortal.loginFailed") : t("authPortal.signupFailed")));
     form.captchaCode = "";
     await refreshCaptcha();
   }
 }
 
 function onOAuth(provider) {
-  setFeedback("info", `${provider} login will be available soon.`);
+  setFeedback("info", t("authPortal.oauthUnavailable", { provider }));
 }
 
 watch(
@@ -267,19 +271,29 @@ onUnmounted(() => {
 <template>
   <section class="auth-page">
     <div class="auth-shell">
+      <RouterLink to="/" class="back-home-btn">
+        <span aria-hidden="true">←</span>
+        <span>{{ t("authPortal.backHome") }}</span>
+      </RouterLink>
+
       <RouterLink to="/" class="auth-brand">
         <span class="auth-brand-mark">AG</span>
         <span>
           <strong>Afterglow</strong>
-          <small>Product Platform</small>
+          <small>{{ t("authPortal.brandSubtitle") }}</small>
         </span>
       </RouterLink>
 
       <UiCard as="article" variant="panel" class="auth-card">
         <header class="auth-head">
-          <div class="mode-tabs" role="tablist" aria-label="Authentication mode">
-            <RouterLink to="/login" class="mode-tab" :class="{ active: isLoginMode }">Login</RouterLink>
-            <RouterLink to="/register" class="mode-tab" :class="{ active: !isLoginMode }">Sign up</RouterLink>
+          <div class="head-top">
+            <div class="mode-tabs" role="tablist" :aria-label="t('authPortal.modeAriaLabel')">
+              <RouterLink to="/login" class="mode-tab" :class="{ active: isLoginMode }">{{ t("authPortal.loginTab") }}</RouterLink>
+              <RouterLink to="/register" class="mode-tab" :class="{ active: !isLoginMode }">{{ t("authPortal.signupTab") }}</RouterLink>
+            </div>
+            <button type="button" class="locale-switch-btn" :aria-label="localeToggleAriaLabel" @click="toggleLocale">
+              {{ localeToggleLabel }}
+            </button>
           </div>
           <h1>{{ sceneTitle }}</h1>
           <p>{{ sceneDescription }}</p>
@@ -287,25 +301,25 @@ onUnmounted(() => {
 
         <form class="auth-form" @submit.prevent="onSubmit">
           <label class="input-group">
-            <span>Email</span>
+            <span>{{ t("authPortal.emailLabel") }}</span>
             <UiInput
               :model-value="form.email"
               :invalid="form.email && !isEmailValid"
               type="email"
-              placeholder="you@company.com"
+              :placeholder="t('authPortal.emailPlaceholder')"
               autocomplete="email"
               @update:model-value="(value) => (form.email = value)"
             />
           </label>
 
           <label class="input-group">
-            <span>Verification code</span>
+            <span>{{ t("authPortal.codeLabel") }}</span>
             <div class="code-line">
               <UiInput
                 :model-value="form.code"
                 :invalid="form.code && !isCodeValid"
                 type="text"
-                placeholder="6-digit code"
+                :placeholder="t('authPortal.codePlaceholder')"
                 maxlength="6"
                 @update:model-value="(value) => (form.code = value)"
                 @keyup.enter="onSubmit"
@@ -317,19 +331,19 @@ onUnmounted(() => {
           </label>
 
           <label class="input-group">
-            <span>Captcha</span>
+            <span>{{ t("authPortal.captchaLabel") }}</span>
             <div class="captcha-line">
               <UiInput
                 :model-value="form.captchaCode"
                 :invalid="form.captchaCode && !isCaptchaValid"
                 type="text"
-                placeholder="Enter captcha"
+                :placeholder="t('authPortal.captchaPlaceholder')"
                 maxlength="8"
                 @update:model-value="(value) => (form.captchaCode = value)"
               />
               <button type="button" class="captcha-image-btn" @click="refreshCaptcha">
-                <img v-if="captcha.imageData" :src="captcha.imageData" alt="Captcha" class="captcha-image" />
-                <span v-else class="captcha-fallback">Refresh</span>
+                <img v-if="captcha.imageData" :src="captcha.imageData" :alt="t('authPortal.captchaAlt')" class="captcha-image" />
+                <span v-else class="captcha-fallback">{{ t("authPortal.captchaFallback") }}</span>
               </button>
             </div>
           </label>
@@ -339,7 +353,7 @@ onUnmounted(() => {
           </UiButton>
         </form>
 
-        <div class="divider"><span>or continue with</span></div>
+        <div class="divider"><span>{{ t("authPortal.dividerText") }}</span></div>
 
         <div class="oauth-row">
           <button type="button" class="oauth-btn" @click="onOAuth('Google')">Google</button>
@@ -366,6 +380,27 @@ onUnmounted(() => {
   width: min(460px, 100%);
   display: grid;
   gap: 14px;
+}
+
+.back-home-btn {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--ag-border-soft);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ag-text-soft);
+  background: #ffffff;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.back-home-btn:hover {
+  border-color: #d0d6dc;
+  background: var(--ag-bg-soft);
+  color: var(--ag-text);
 }
 
 .auth-brand {
@@ -414,6 +449,13 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+.head-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .mode-tabs {
   display: inline-flex;
   width: fit-content;
@@ -435,6 +477,24 @@ onUnmounted(() => {
   background: #ffffff;
   color: var(--ag-text);
   box-shadow: 0 1px 2px rgba(17, 17, 17, 0.08);
+}
+
+.locale-switch-btn {
+  min-width: 52px;
+  border: 1px solid var(--ag-border-soft);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ag-text-soft);
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.locale-switch-btn:hover {
+  border-color: #d0d6dc;
+  background: var(--ag-bg-soft);
 }
 
 .auth-head h1 {
@@ -563,12 +623,23 @@ onUnmounted(() => {
     padding: 18px 16px;
   }
 
+  .back-home-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .head-top,
   .code-line,
   .captcha-line,
   .oauth-row {
     grid-template-columns: 1fr;
   }
 
+  .head-top {
+    display: grid;
+  }
+
+  .locale-switch-btn,
   .code-btn,
   .captcha-image-btn {
     width: 100%;

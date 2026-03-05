@@ -237,6 +237,11 @@ h3 {
   color: var(--ag-text);
 }
 
+.locale-toggle-btn {
+  min-width: 52px;
+  text-align: center;
+}
+
 .cta-btn {
   border-color: var(--ag-accent);
   color: #ffffff;

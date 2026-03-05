@@ -1,12 +1,14 @@
 <script setup>
 import { computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
+import { useI18n } from "../composables/useI18n";
 import UiButton from "../components/ui/UiButton.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import UiStatus from "../components/ui/UiStatus.vue";
 import { useAiStore } from "../stores/ai";
 
 const aiStore = useAiStore();
+const { t } = useI18n();
 const { latestSession, history, loading, loadingMore, hasMore, running, error } = storeToRefs(aiStore);
 
 const latestTone = computed(() => {
@@ -23,7 +25,7 @@ function formatDateTime(value) {
   if (!value) {
     return "-";
   }
-  return new Date(value).toLocaleString("zh-CN", { hour12: false });
+  return new Date(value).toLocaleString(t("mirror.dateLocale"), { hour12: false });
 }
 
 onMounted(async () => {
@@ -34,60 +36,60 @@ onMounted(async () => {
 <template>
   <UiCard variant="hero" compact class="mirror-hero">
     <p class="eyebrow">M6 AI Mirror</p>
-    <h1>静一下</h1>
-    <p class="subtitle">基于最近 24 小时内容，输出 summary / suggestion / question，并给出安全标记。</p>
+    <h1>{{ t("mirror.heroTitle") }}</h1>
+    <p class="subtitle">{{ t("mirror.heroSubtitle") }}</p>
     <div class="hero-actions row-actions">
       <UiButton :disabled="running" @click="aiStore.runMirror('24h')">
-        {{ running ? "生成中..." : "生成最新镜像" }}
+        {{ running ? t("mirror.running") : t("mirror.runLatest") }}
       </UiButton>
       <UiButton variant="ghost" :disabled="loading" @click="aiStore.loadHistory({ reset: true })">
-        {{ loading ? "刷新中..." : "刷新历史" }}
+        {{ loading ? t("mirror.refreshing") : t("mirror.refreshHistory") }}
       </UiButton>
     </div>
   </UiCard>
 
   <section class="grid single">
     <UiCard as="article" variant="panel">
-      <h2>最新镜像结果</h2>
+      <h2>{{ t("mirror.latestTitle") }}</h2>
       <UiStatus v-if="error" tone="error">{{ error }}</UiStatus>
-      <UiStatus v-else-if="!latestSession" tone="muted">暂无镜像记录，先点击上方按钮生成。</UiStatus>
+      <UiStatus v-else-if="!latestSession" tone="muted">{{ t("mirror.noLatest") }}</UiStatus>
       <div v-else class="mirror-latest">
         <UiStatus :tone="latestTone">
-          风险标记：
+          {{ t("mirror.riskFlags") }}:
           selfHarm={{ latestSession.flags?.riskSelfHarm ? "true" : "false" }} ·
           needsHelp={{ latestSession.flags?.needsHumanHelp ? "true" : "false" }}
         </UiStatus>
         <article class="mirror-block">
-          <h3>Summary</h3>
+          <h3>{{ t("mirror.summary") }}</h3>
           <p>{{ latestSession.summary }}</p>
         </article>
         <article class="mirror-block">
-          <h3>Suggestion</h3>
+          <h3>{{ t("mirror.suggestion") }}</h3>
           <p>{{ latestSession.suggestion }}</p>
         </article>
         <article class="mirror-block">
-          <h3>Question</h3>
+          <h3>{{ t("mirror.question") }}</h3>
           <p>{{ latestSession.question }}</p>
         </article>
-        <small class="muted">生成时间：{{ formatDateTime(latestSession.createdAt) }}</small>
+        <small class="muted">{{ t("mirror.generatedAt") }}: {{ formatDateTime(latestSession.createdAt) }}</small>
       </div>
     </UiCard>
   </section>
 
   <section class="grid single">
     <UiCard as="article" variant="panel">
-      <h2>镜像历史</h2>
+      <h2>{{ t("mirror.historyTitle") }}</h2>
       <ul class="mirror-history">
         <li v-for="item in history" :key="item.sessionId" class="history-card">
           <header>
             <strong>#{{ item.sessionId }}</strong>
             <small>{{ formatDateTime(item.createdAt) }}</small>
           </header>
-          <p><b>Summary:</b> {{ item.summary }}</p>
-          <p><b>Suggestion:</b> {{ item.suggestion }}</p>
-          <p><b>Question:</b> {{ item.question }}</p>
+          <p><b>{{ t("mirror.summary") }}:</b> {{ item.summary }}</p>
+          <p><b>{{ t("mirror.suggestion") }}:</b> {{ item.suggestion }}</p>
+          <p><b>{{ t("mirror.question") }}:</b> {{ item.question }}</p>
           <small>
-            flags: selfHarm={{ item.flags?.riskSelfHarm ? "true" : "false" }},
+            {{ t("mirror.flagsPrefix") }}: selfHarm={{ item.flags?.riskSelfHarm ? "true" : "false" }},
             needsHelp={{ item.flags?.needsHumanHelp ? "true" : "false" }}
           </small>
         </li>
@@ -95,7 +97,7 @@ onMounted(async () => {
 
       <div class="hero-actions" v-if="hasMore">
         <UiButton variant="ghost" :disabled="loadingMore" @click="aiStore.loadHistory({ reset: false })">
-          {{ loadingMore ? "加载中..." : "加载更多历史" }}
+          {{ loadingMore ? t("mirror.loadingMore") : t("mirror.loadMoreHistory") }}
         </UiButton>
       </div>
     </UiCard>

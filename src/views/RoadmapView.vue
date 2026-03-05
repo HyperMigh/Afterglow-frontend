@@ -1,52 +1,22 @@
 <script setup>
+import { computed } from "vue";
 import UiCard from "../components/ui/UiCard.vue";
+import { useI18n } from "../composables/useI18n";
 
-const roadmapMilestones = [
-  {
-    id: "M1",
-    name: "认证与基础骨架",
-    status: "已完成",
-    goals: ["邮箱验证码登录", "统一响应与异常处理", "基础用户信息接口"]
-  },
-  {
-    id: "M2",
-    name: "社区时间线",
-    status: "进行中",
-    goals: ["发帖/评论/点赞", "举报链路", "游标分页与交互打磨"]
-  },
-  {
-    id: "M3",
-    name: "私聊能力",
-    status: "待启动",
-    goals: ["会话列表", "WebSocket 通道", "已读游标与基础同步"]
-  },
-  {
-    id: "M4",
-    name: "情绪模块",
-    status: "待启动",
-    goals: ["文本情绪识别", "颜色映射策略", "情绪概览卡片"]
-  },
-  {
-    id: "M5",
-    name: "AI 安抚助手",
-    status: "待启动",
-    goals: ["静一下建议生成", "敏感场景安全边界", "降级与可观测性"]
-  }
-];
+const { t } = useI18n();
+const roadmapMilestones = computed(() => t("roadmap.milestones") || []);
 </script>
 
 <template>
   <UiCard variant="hero" class="roadmap-hero">
-    <p class="eyebrow">Roadmap Snapshot</p>
-    <h1>开发路线正在从「可运行」走向「可持续迭代」。</h1>
-    <p class="subtitle">
-      路线图围绕五个阶段推进：先保证基础业务闭环，再逐步扩展实时能力、情绪能力与 AI 能力。
-    </p>
+    <p class="eyebrow">{{ t("roadmap.eyebrow") }}</p>
+    <h1>{{ t("roadmap.heroTitle") }}</h1>
+    <p class="subtitle">{{ t("roadmap.heroSubtitle") }}</p>
   </UiCard>
 
   <section class="grid single">
     <UiCard as="article" variant="panel" class="roadmap-panel">
-      <h2>里程碑拆分</h2>
+      <h2>{{ t("roadmap.panelTitle") }}</h2>
       <div class="milestone-list">
         <article v-for="item in roadmapMilestones" :key="item.id" class="milestone-card">
           <header>

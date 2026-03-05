@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive } from "vue";
 import { storeToRefs } from "pinia";
+import { useI18n } from "../composables/useI18n";
 import UiButton from "../components/ui/UiButton.vue";
 import UiCard from "../components/ui/UiCard.vue";
 import UiInput from "../components/ui/UiInput.vue";
@@ -8,6 +9,7 @@ import UiStatus from "../components/ui/UiStatus.vue";
 import { useChatStore } from "../stores/chat";
 
 const chatStore = useChatStore();
+const { t } = useI18n();
 const {
   conversations,
   discoverUsers,
@@ -38,7 +40,7 @@ function formatDateTime(value) {
   if (!value) {
     return "-";
   }
-  return new Date(value).toLocaleString("zh-CN", { hour12: false });
+  return new Date(value).toLocaleString(t("chat.dateLocale"), { hour12: false });
 }
 
 async function onOpenConversation(conversationId) {
@@ -78,11 +80,11 @@ onMounted(async () => {
 <template>
   <UiCard variant="hero" compact class="chat-hero">
     <p class="eyebrow">M4 Chat</p>
-    <h1>私聊会话</h1>
-    <p class="subtitle">支持会话创建、消息历史、HTTP 兜底发送，以及 WebSocket 实时事件同步。</p>
+    <h1>{{ t("chat.heroTitle") }}</h1>
+    <p class="subtitle">{{ t("chat.heroSubtitle") }}</p>
     <div class="hero-actions row-actions">
       <UiStatus :tone="connected ? 'success' : 'muted'">
-        {{ connected ? "WebSocket 已连接" : "WebSocket 未连接（将使用 HTTP 兜底）" }}
+        {{ connected ? t("chat.wsConnected") : t("chat.wsDisconnected") }}
       </UiStatus>
     </div>
   </UiCard>
@@ -90,23 +92,23 @@ onMounted(async () => {
   <section class="chat-layout">
     <UiCard as="article" variant="panel" class="chat-side">
       <div class="side-head">
-        <h2>发起会话</h2>
+        <h2>{{ t("chat.startConversation") }}</h2>
         <UiButton variant="ghost" size="sm" :disabled="loadingDiscoverUsers" @click="chatStore.loadDiscoverUsers()">
-          {{ loadingDiscoverUsers ? "刷新中..." : "刷新候选用户" }}
+          {{ loadingDiscoverUsers ? t("chat.refreshing") : t("chat.refreshCandidates") }}
         </UiButton>
       </div>
 
       <div class="form-grid">
         <label class="field">
-          <span>按用户 ID 发起会话</span>
+          <span>{{ t("chat.startByUserId") }}</span>
           <div class="quick-line">
             <UiInput
               :model-value="form.targetUserId"
-              placeholder="输入目标用户 ID"
+              :placeholder="t('chat.targetUserPlaceholder')"
               @update:model-value="(value) => (form.targetUserId = value)"
               @keyup.enter="onCreateConversation(form.targetUserId)"
             />
-            <UiButton variant="ghost" @click="onCreateConversation(form.targetUserId)">发起</UiButton>
+            <UiButton variant="ghost" @click="onCreateConversation(form.targetUserId)">{{ t("chat.start") }}</UiButton>
           </div>
         </label>
       </div>
@@ -115,7 +117,7 @@ onMounted(async () => {
         <li v-for="user in discoverUsers" :key="user.userId">
           <button class="discover-btn" @click="onCreateConversation(user.userId)">
             <strong>{{ user.nickname }}</strong>
-            <small>ID {{ user.userId }}</small>
+            <small>{{ t("chat.idPrefix") }} {{ user.userId }}</small>
           </button>
         </li>
       </ul>
@@ -123,14 +125,14 @@ onMounted(async () => {
 
     <UiCard as="article" variant="panel" class="chat-main">
       <div class="main-head">
-        <h2>会话列表</h2>
+        <h2>{{ t("chat.conversationList") }}</h2>
         <UiButton variant="ghost" size="sm" :disabled="loading" @click="chatStore.loadConversations({ reset: true })">
-          {{ loading ? "加载中..." : "刷新会话" }}
+          {{ loading ? t("chat.loading") : t("chat.refreshConversation") }}
         </UiButton>
       </div>
 
       <UiStatus v-if="error" tone="error">{{ error }}</UiStatus>
-      <div v-if="!conversations.length" class="empty-tip">当前没有会话，先从左侧发起一个。</div>
+      <div v-if="!conversations.length" class="empty-tip">{{ t("chat.emptyConversation") }}</div>
       <ul class="conversation-list">
         <li v-for="item in conversations" :key="item.conversationId">
           <button
@@ -140,7 +142,7 @@ onMounted(async () => {
           >
             <div>
               <strong>{{ item.peerNickname }}</strong>
-              <small>{{ item.lastMessage || "暂无消息" }}</small>
+              <small>{{ item.lastMessage || t("chat.noMessage") }}</small>
             </div>
             <span class="meta">
               <em v-if="item.unread">{{ item.unread }}</em>
@@ -152,7 +154,7 @@ onMounted(async () => {
 
       <div class="hero-actions" v-if="hasMore">
         <UiButton variant="text" :disabled="loadingMore" @click="chatStore.loadConversations({ reset: false })">
-          {{ loadingMore ? "加载中..." : "加载更多会话" }}
+          {{ loadingMore ? t("chat.loading") : t("chat.loadMoreConversations") }}
         </UiButton>
       </div>
 
@@ -160,13 +162,13 @@ onMounted(async () => {
 
       <div v-if="currentConversation" class="message-panel">
         <header class="message-head">
-          <h3>与 {{ currentConversation.peerNickname }} 的对话</h3>
+          <h3>{{ t("chat.conversationWith", { name: currentConversation.peerNickname }) }}</h3>
           <UiButton
             variant="text"
             :disabled="!messageHasMoreByConversation[currentConversationId]"
             @click="onLoadOlder"
           >
-            {{ loadingMessagesByConversation[currentConversationId] ? "加载中..." : "加载更早消息" }}
+            {{ loadingMessagesByConversation[currentConversationId] ? t("chat.loading") : t("chat.loadOlder") }}
           </UiButton>
         </header>
 
@@ -180,14 +182,14 @@ onMounted(async () => {
         <div class="quick-line">
           <UiInput
             :model-value="form.message"
-            placeholder="输入消息，Enter 发送"
+            :placeholder="t('chat.inputPlaceholder')"
             @update:model-value="(value) => (form.message = value)"
             @keyup.enter="onSendMessage"
           />
-          <UiButton :disabled="!canSend" @click="onSendMessage">发送</UiButton>
+          <UiButton :disabled="!canSend" @click="onSendMessage">{{ t("chat.send") }}</UiButton>
         </div>
       </div>
-      <UiStatus v-else tone="muted">请选择一个会话开始聊天。</UiStatus>
+      <UiStatus v-else tone="muted">{{ t("chat.chooseConversation") }}</UiStatus>
     </UiCard>
   </section>
 </template>

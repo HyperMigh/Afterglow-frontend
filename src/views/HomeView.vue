@@ -1,84 +1,33 @@
-﻿<script setup>
+<script setup>
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../stores/auth";
+import { useI18n } from "../composables/useI18n";
 
 const authStore = useAuthStore();
 const { isAuthenticated } = storeToRefs(authStore);
+const { t } = useI18n();
 
-const productFeatures = [
-  {
-    title: "Unified Context",
-    description: "Connect product signals, user feedback, and team updates in one clear workspace."
-  },
-  {
-    title: "Reliable Workflows",
-    description: "Ship repeatable processes with structured collaboration and predictable execution."
-  },
-  {
-    title: "Actionable Insights",
-    description: "Transform raw conversations into measurable priorities and product decisions."
-  }
-];
-
-const solutions = [
-  {
-    title: "Product Teams",
-    text: "Align discovery, delivery, and roadmap discussions without context loss."
-  },
-  {
-    title: "Customer Operations",
-    text: "Maintain continuity across support interactions with cleaner handoffs."
-  },
-  {
-    title: "Community Platforms",
-    text: "Moderate and engage with clarity using structured interaction history."
-  }
-];
-
-const plans = [
-  {
-    name: "Starter",
-    price: "$0",
-    note: "For early exploration",
-    items: ["Core workspace", "Basic collaboration", "Community support"]
-  },
-  {
-    name: "Growth",
-    price: "$29",
-    note: "Per user / month",
-    items: ["Advanced workflows", "Priority support", "Team analytics"]
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    note: "For larger organizations",
-    items: ["Security controls", "SLA support", "Custom integrations"]
-  }
-];
-
-const docItems = [
-  "Quickstart setup for frontend and backend.",
-  "Authentication and API integration guides.",
-  "Deployment and runtime configuration notes."
-];
-
+const productFeatures = computed(() => t("home.productFeatures") || []);
+const solutions = computed(() => t("home.solutions") || []);
+const plans = computed(() => t("home.plans") || []);
+const docItems = computed(() => t("home.docItems") || []);
 const primaryCtaTo = computed(() => (isAuthenticated.value ? "/feed" : "/register"));
-const primaryCtaLabel = computed(() => (isAuthenticated.value ? "Open Workspace" : "Get Started"));
+const primaryCtaLabel = computed(() =>
+  isAuthenticated.value ? t("home.primaryCtaWorkspace") : t("home.primaryCtaGetStarted")
+);
 </script>
 
 <template>
   <section class="marketing-page">
     <div class="marketing-shell">
       <section class="hero" aria-label="Hero">
-        <p class="hero-kicker">Afterglow</p>
-        <h1>Build better products with clarity.</h1>
-        <p class="hero-subtitle">
-          Afterglow helps teams organize feedback, conversations, and decisions into clean and trustworthy execution.
-        </p>
+        <p class="hero-kicker">{{ t("home.heroKicker") }}</p>
+        <h1>{{ t("home.heroTitle") }}</h1>
+        <p class="hero-subtitle">{{ t("home.heroSubtitle") }}</p>
         <div class="hero-actions">
           <RouterLink :to="primaryCtaTo" class="hero-btn hero-btn--solid">{{ primaryCtaLabel }}</RouterLink>
-          <RouterLink to="/#docs" class="hero-btn hero-btn--ghost">View Docs</RouterLink>
+          <RouterLink to="/#docs" class="hero-btn hero-btn--ghost">{{ t("home.docsCta") }}</RouterLink>
         </div>
         <div class="hero-shape hero-shape-a" />
         <div class="hero-shape hero-shape-b" />
@@ -86,8 +35,8 @@ const primaryCtaLabel = computed(() => (isAuthenticated.value ? "Open Workspace"
 
       <section id="product" class="section-block">
         <div class="section-head">
-          <h2>Product</h2>
-          <p>Essential capabilities for modern SaaS teams that value speed and precision.</p>
+          <h2>{{ t("home.productTitle") }}</h2>
+          <p>{{ t("home.productSubtitle") }}</p>
         </div>
         <div class="grid-12 feature-grid">
           <article v-for="item in productFeatures" :key="item.title" class="saas-card col-4">
@@ -99,8 +48,8 @@ const primaryCtaLabel = computed(() => (isAuthenticated.value ? "Open Workspace"
 
       <section id="solutions" class="section-block">
         <div class="section-head">
-          <h2>Solutions</h2>
-          <p>Designed for cross-functional product organizations.</p>
+          <h2>{{ t("home.solutionsTitle") }}</h2>
+          <p>{{ t("home.solutionsSubtitle") }}</p>
         </div>
         <div class="grid-12 solution-grid">
           <article v-for="item in solutions" :key="item.title" class="saas-card col-4">
@@ -112,8 +61,8 @@ const primaryCtaLabel = computed(() => (isAuthenticated.value ? "Open Workspace"
 
       <section id="pricing" class="section-block">
         <div class="section-head">
-          <h2>Pricing</h2>
-          <p>Simple plans for teams at every stage.</p>
+          <h2>{{ t("home.pricingTitle") }}</h2>
+          <p>{{ t("home.pricingSubtitle") }}</p>
         </div>
         <div class="grid-12 pricing-grid">
           <article v-for="plan in plans" :key="plan.name" class="saas-card pricing-card col-4">
@@ -129,8 +78,8 @@ const primaryCtaLabel = computed(() => (isAuthenticated.value ? "Open Workspace"
 
       <section id="docs" class="section-block docs-block">
         <div class="section-head">
-          <h2>Docs</h2>
-          <p>Practical documentation for implementation and operations.</p>
+          <h2>{{ t("home.docsTitle") }}</h2>
+          <p>{{ t("home.docsSubtitle") }}</p>
         </div>
         <ul class="docs-list">
           <li v-for="item in docItems" :key="item">{{ item }}</li>
@@ -138,14 +87,14 @@ const primaryCtaLabel = computed(() => (isAuthenticated.value ? "Open Workspace"
       </section>
 
       <section class="cta-block">
-        <h2>Ready to move faster with confidence?</h2>
-        <p>Start with Afterglow and bring more structure and clarity into your product execution.</p>
+        <h2>{{ t("home.ctaTitle") }}</h2>
+        <p>{{ t("home.ctaSubtitle") }}</p>
         <RouterLink :to="primaryCtaTo" class="hero-btn hero-btn--solid">{{ primaryCtaLabel }}</RouterLink>
       </section>
 
       <footer class="marketing-footer">
         <p>Afterglow</p>
-        <span>Clean software for modern product teams.</span>
+        <span>{{ t("home.footerTagline") }}</span>
       </footer>
     </div>
   </section>
