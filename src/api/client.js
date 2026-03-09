@@ -60,9 +60,24 @@ function normalizeHttpError(error) {
   if (error?.bizCode) {
     return error;
   }
-  const normalized = new Error(error?.response?.data?.message || error?.message || "Network request failed");
+  const httpStatus = error?.response?.status || null;
+  const backendMessage = error?.response?.data?.message;
+  const fallbackMessage = error?.message || "Network request failed";
+  let message = backendMessage || fallbackMessage;
+
+  if (!backendMessage && httpStatus === 503) {
+    message = "Service unavailable (503). Check api-gateway and target backend service.";
+  } else if (!backendMessage && httpStatus === 502) {
+    message = "Bad gateway (502). Check backend service ports and gateway routes.";
+  } else if (!backendMessage && httpStatus === 504) {
+    message = "Gateway timeout (504). Please retry later.";
+  } else if (!backendMessage && error?.code === "ERR_NETWORK") {
+    message = "Cannot reach backend. Check whether api-gateway is running.";
+  }
+
+  const normalized = new Error(message);
   normalized.bizCode = error?.response?.data?.code || null;
-  normalized.httpStatus = error?.response?.status || null;
+  normalized.httpStatus = httpStatus;
   normalized.requestId = error?.response?.headers?.["x-request-id"] || null;
   return normalized;
 }
