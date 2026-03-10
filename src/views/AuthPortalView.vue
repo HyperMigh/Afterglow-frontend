@@ -74,15 +74,12 @@ const canSendCode = computed(() => cooldown.value <= 0 && !sendingCode.value);
 const canSubmit = computed(() => isEmailValid.value && isCodeValid.value && isCaptchaValid.value && !submitLoading.value);
 const layoutClassList = computed(() => {
   const classes = [];
-  if (!isLoginMode.value) {
-    classes.push("auth-layout--reverse");
-  }
   if (layoutMotionClass.value) {
     classes.push(layoutMotionClass.value);
   }
   return classes;
 });
-const localeToggleLabel = computed(() => (isEnglish.value ? "中" : "EN"));
+const localeToggleLabel = computed(() => (isEnglish.value ? "ZH" : "EN"));
 const localeToggleAriaLabel = computed(() =>
   isEnglish.value ? t("app.localeSwitchToChinese") : t("app.localeSwitchToEnglish")
 );
@@ -93,6 +90,10 @@ const sceneTitle = computed(() =>
 const sceneDescription = computed(() =>
   isLoginMode.value ? t("authPortal.sceneDescLogin") : t("authPortal.sceneDescSignup")
 );
+const canvasSlogans = computed(() => {
+  const items = isLoginMode.value ? t("authPortal.canvasSlogansLogin") : t("authPortal.canvasSlogansSignup");
+  return Array.isArray(items) ? items : [];
+});
 
 const feedbackTone = computed(() => {
   if (feedback.message === FEEDBACK_CODE_SENT) {
@@ -278,6 +279,10 @@ function onOAuth(provider) {
   setFeedback("info", t("authPortal.oauthUnavailable", { provider }));
 }
 
+function onBackHome() {
+  router.push("/");
+}
+
 function randomBetween(min, max) {
   return min + Math.random() * (max - min);
 }
@@ -450,15 +455,25 @@ onUnmounted(() => {
     </div>
 
     <div class="auth-layout" :class="layoutClassList">
-      <aside class="auth-canvas" aria-hidden="true">
+      <aside class="auth-canvas">
         <div class="canvas-aurora canvas-aurora-a" />
         <div class="canvas-aurora canvas-aurora-b" />
         <div class="canvas-aurora canvas-aurora-c" />
 
         <div class="canvas-copy">
-          <p class="canvas-kicker">Afterglow</p>
+          <p class="canvas-kicker">{{ t("authPortal.canvasKicker") }}</p>
           <h2>{{ sceneTitle }}</h2>
           <p>{{ sceneDescription }}</p>
+        </div>
+
+        <div class="canvas-slogan-list">
+          <p
+            v-for="(slogan, index) in canvasSlogans"
+            :key="`${scene}-${index}`"
+            class="canvas-slogan"
+          >
+            {{ slogan }}
+          </p>
         </div>
 
         <div class="canvas-palette">
@@ -475,19 +490,6 @@ onUnmounted(() => {
       </aside>
 
       <div class="auth-shell">
-        <RouterLink to="/" class="back-home-btn">
-          <span aria-hidden="true">←</span>
-          <span>{{ t("authPortal.backHome") }}</span>
-        </RouterLink>
-
-        <RouterLink to="/" class="auth-brand">
-          <span class="auth-brand-mark">AG</span>
-          <span>
-            <strong>Afterglow</strong>
-            <small>{{ t("authPortal.brandSubtitle") }}</small>
-          </span>
-        </RouterLink>
-
         <UiCard as="article" variant="panel" class="auth-card">
           <header class="auth-head">
             <div class="head-top">
@@ -552,6 +554,9 @@ onUnmounted(() => {
 
             <UiButton class="submit-btn" type="submit" :disabled="!canSubmit" block>
               {{ submitButtonText }}
+            </UiButton>
+            <UiButton class="submit-btn back-home-submit" type="button" block @click="onBackHome">
+              {{ t("authPortal.backHome") }}
             </UiButton>
           </form>
 
@@ -672,7 +677,7 @@ onUnmounted(() => {
 .auth-canvas {
   position: relative;
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr auto auto;
   gap: 14px;
   padding: clamp(18px, 2.8vw, 30px);
   border-right: 1px solid rgba(221, 229, 238, 0.86);
@@ -744,6 +749,25 @@ onUnmounted(() => {
   color: rgba(52, 64, 84, 0.8);
 }
 
+.canvas-slogan-list {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.canvas-slogan {
+  margin: 0;
+  max-width: 46ch;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(205, 216, 232, 0.74);
+  background: rgba(255, 255, 255, 0.66);
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(52, 64, 84, 0.86);
+}
+
 .canvas-palette {
   position: relative;
   z-index: 1;
@@ -763,70 +787,20 @@ onUnmounted(() => {
   position: relative;
   z-index: 1;
   width: 100%;
-  display: grid;
-  align-content: start;
-  justify-items: stretch;
-  gap: 10px;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 14px clamp(14px, 2.2vw, 28px);
 }
 
-.back-home-btn {
-  width: fit-content;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--ag-border-soft);
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ag-text-soft);
-  background: #ffffff;
-  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
-}
-
-.back-home-btn:hover {
-  border-color: #d0d6dc;
-  background: var(--ag-bg-soft);
-  color: var(--ag-text);
-}
-
-.auth-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-}
-
-.auth-brand-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  background: var(--ag-accent);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.auth-brand strong {
-  display: block;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--ag-text);
-}
-
-.auth-brand small {
-  display: block;
-  font-size: 12px;
-  color: var(--ag-text-muted);
+.back-home-submit {
+  margin-top: 2px;
 }
 
 .auth-card {
   width: min(500px, 100%);
-  justify-self: center;
+  min-height: 640px;
   padding: 18px;
   border-radius: 18px;
   border: 1px solid var(--ag-border-soft);
@@ -1034,7 +1008,12 @@ onUnmounted(() => {
     font-size: clamp(28px, 8vw, 42px);
   }
 
+  .canvas-slogan {
+    max-width: none;
+  }
+
   .auth-shell {
+    min-height: auto;
     padding-top: 18px;
     padding-bottom: 20px;
   }
@@ -1062,12 +1041,8 @@ onUnmounted(() => {
   }
 
   .auth-card {
+    min-height: auto;
     padding: 18px 16px;
-  }
-
-  .back-home-btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .head-top,
@@ -1098,3 +1073,4 @@ onUnmounted(() => {
   }
 }
 </style>
+

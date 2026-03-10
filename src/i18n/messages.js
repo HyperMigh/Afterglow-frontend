@@ -137,6 +137,19 @@ export const messages = {
       sceneTitleSignup: "创建账号",
       sceneDescLogin: "使用邮箱验证码完成身份验证并进入工作台。",
       sceneDescSignup: "通过邮箱验证码创建账号，流程安全且稳定。",
+      canvasKicker: "AFTERGLOW",
+      canvasEmotionLogin: "夜色会过去，你的心事会在这里被温柔接住。",
+      canvasEmotionSignup: "从这一刻起，我们一起把情绪与表达慢慢安放。",
+      canvasSlogansLogin: [
+        "久别重逢，不必解释太多。",
+        "把今天的疲惫放下，让清晰慢慢回来。",
+        "那些没说完的话，在这里继续。"
+      ],
+      canvasSlogansSignup: [
+        "第一次开口，也值得被认真回应。",
+        "为每一次情绪起伏，留一盏稳定的晚光。",
+        "从此有一个地方，记录你真实的声音。"
+      ],
       emailLabel: "邮箱",
       emailPlaceholder: "you@company.com",
       codeLabel: "验证码",
@@ -407,6 +420,19 @@ export const messages = {
       sceneTitleSignup: "Create your account",
       sceneDescLogin: "Use your email verification credentials to access your workspace.",
       sceneDescSignup: "Create an account with email verification in a secure and reliable flow.",
+      canvasKicker: "AFTERGLOW",
+      canvasEmotionLogin: "Tonight can soften. Your thoughts are safe here.",
+      canvasEmotionSignup: "Start gently. Build a space that listens with care.",
+      canvasSlogansLogin: [
+        "You do not have to explain everything to be welcomed back.",
+        "Set the weight of today down and let clarity return.",
+        "Pick up the unfinished conversation right here."
+      ],
+      canvasSlogansSignup: [
+        "Your first words deserve a thoughtful response.",
+        "Keep a steady glow for every emotional high and low.",
+        "Create a place where your real voice can stay."
+      ],
       emailLabel: "Email",
       emailPlaceholder: "you@company.com",
       codeLabel: "Verification code",
