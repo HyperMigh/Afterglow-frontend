@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "../stores/auth";
@@ -25,8 +25,11 @@ const { sendingCode, loggingIn, registering } = storeToRefs(authStore);
 const router = useRouter();
 const route = useRoute();
 const authPageRef = ref(null);
+const authLayoutRef = ref(null);
+const canvasPaneRef = ref(null);
+const shellPaneRef = ref(null);
 const glowDots = ref([]);
-const layoutMotionClass = ref("");
+const isLayoutReversed = ref(props.scene === "register");
 
 const GLOW_COLOR_POOL = ["#ff8f6b", "#66b8ff", "#8adf9f", "#ffd166", "#b68cff", "#68d8cf"];
 const GLOW_MAX_DOTS = 120;
@@ -37,7 +40,7 @@ let glowDotSeed = 0;
 let glowLastEmitTs = 0;
 let glowFrameId = null;
 let glowLastFrameTs = 0;
-let layoutMotionTimer = null;
+let layoutAnimations = [];
 
 const form = reactive({
   email: "",
@@ -74,8 +77,8 @@ const canSendCode = computed(() => cooldown.value <= 0 && !sendingCode.value);
 const canSubmit = computed(() => isEmailValid.value && isCodeValid.value && isCaptchaValid.value && !submitLoading.value);
 const layoutClassList = computed(() => {
   const classes = [];
-  if (layoutMotionClass.value) {
-    classes.push(layoutMotionClass.value);
+  if (isLayoutReversed.value) {
+    classes.push("auth-layout--reverse");
   }
   return classes;
 });
@@ -385,28 +388,96 @@ function onPointerDown(event) {
   ensureGlowFrame();
 }
 
-function clearLayoutMotionTimer() {
-  if (layoutMotionTimer) {
-    window.clearTimeout(layoutMotionTimer);
-    layoutMotionTimer = null;
+function clearLayoutAnimations() {
+  if (!layoutAnimations.length) {
+    return;
   }
+  layoutAnimations.forEach((animation) => animation.cancel());
+  layoutAnimations = [];
 }
 
-function startLayoutMotion(nextScene) {
-  const motionClass = nextScene === "register" ? "auth-layout--to-register" : "auth-layout--to-login";
-  clearLayoutMotionTimer();
-  layoutMotionClass.value = motionClass;
-  layoutMotionTimer = window.setTimeout(() => {
-    layoutMotionClass.value = "";
-    clearLayoutMotionTimer();
-  }, 560);
+function shouldSkipSwapMotion() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+  if (window.matchMedia("(max-width: 980px)").matches) {
+    return true;
+  }
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return true;
+  }
+  return false;
+}
+
+function runFlipAnimation(element, fromRect, toRect) {
+  const dx = fromRect.left - toRect.left;
+  const dy = fromRect.top - toRect.top;
+
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) {
+    return null;
+  }
+
+  return element.animate(
+    [
+      {
+        transform: `translate(${dx}px, ${dy}px)`,
+        filter: "brightness(1.02)"
+      },
+      {
+        transform: "translate(0, 0)",
+        filter: "brightness(1)"
+      }
+    ],
+    {
+      duration: 520,
+      easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
+      fill: "both"
+    }
+  );
+}
+
+async function swapLayoutForScene(nextScene) {
+  const shouldReverse = nextScene === "register";
+  const canvasEl = canvasPaneRef.value;
+  const shellEl = shellPaneRef.value;
+
+  if (!canvasEl || !shellEl || shouldSkipSwapMotion()) {
+    clearLayoutAnimations();
+    isLayoutReversed.value = shouldReverse;
+    return;
+  }
+
+  clearLayoutAnimations();
+
+  const beforeCanvas = canvasEl.getBoundingClientRect();
+  const beforeShell = shellEl.getBoundingClientRect();
+
+  isLayoutReversed.value = shouldReverse;
+  await nextTick();
+
+  const afterCanvas = canvasEl.getBoundingClientRect();
+  const afterShell = shellEl.getBoundingClientRect();
+
+  layoutAnimations = [
+    runFlipAnimation(canvasEl, beforeCanvas, afterCanvas),
+    runFlipAnimation(shellEl, beforeShell, afterShell)
+  ].filter(Boolean);
+
+  if (!layoutAnimations.length) {
+    return;
+  }
+
+  await Promise.all(layoutAnimations.map((animation) => animation.finished.catch(() => null)));
+  layoutAnimations = [];
 }
 
 watch(
   () => props.scene,
   async (nextScene, prevScene) => {
     if (prevScene && prevScene !== nextScene) {
-      startLayoutMotion(nextScene);
+      await swapLayoutForScene(nextScene);
+    } else {
+      isLayoutReversed.value = nextScene === "register";
     }
     await resetForScene();
   },
@@ -420,7 +491,7 @@ onMounted(() => {
 onUnmounted(() => {
   clearCooldownTimer();
   clearCodeExpireTimer();
-  clearLayoutMotionTimer();
+  clearLayoutAnimations();
   if (glowFrameId !== null) {
     window.cancelAnimationFrame(glowFrameId);
     glowFrameId = null;
@@ -454,8 +525,8 @@ onUnmounted(() => {
       />
     </div>
 
-    <div class="auth-layout" :class="layoutClassList">
-      <aside class="auth-canvas">
+    <div ref="authLayoutRef" class="auth-layout" :class="layoutClassList">
+      <aside ref="canvasPaneRef" class="auth-canvas">
         <div class="canvas-aurora canvas-aurora-a" />
         <div class="canvas-aurora canvas-aurora-b" />
         <div class="canvas-aurora canvas-aurora-c" />
@@ -489,7 +560,7 @@ onUnmounted(() => {
         </div>
       </aside>
 
-      <div class="auth-shell">
+      <div ref="shellPaneRef" class="auth-shell">
         <UiCard as="article" variant="panel" class="auth-card">
           <header class="auth-head">
             <div class="head-top">
@@ -621,9 +692,13 @@ onUnmounted(() => {
   backdrop-filter: blur(6px);
 }
 
+.auth-layout--reverse {
+  grid-template-columns: minmax(420px, 0.82fr) minmax(0, 1.18fr);
+}
+
 .auth-canvas,
 .auth-shell {
-  transition: opacity 220ms ease;
+  will-change: transform;
 }
 
 .auth-layout--reverse .auth-canvas {
@@ -634,44 +709,6 @@ onUnmounted(() => {
 
 .auth-layout--reverse .auth-shell {
   order: 1;
-}
-
-.auth-layout--to-register .auth-canvas {
-  animation: pane-enter-right 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-.auth-layout--to-register .auth-shell {
-  animation: pane-enter-left 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-.auth-layout--to-login .auth-canvas {
-  animation: pane-enter-left 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-.auth-layout--to-login .auth-shell {
-  animation: pane-enter-right 520ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-@keyframes pane-enter-left {
-  from {
-    opacity: 0.56;
-    transform: translateX(-24px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-
-@keyframes pane-enter-right {
-  from {
-    opacity: 0.56;
-    transform: translateX(24px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
 }
 
 .auth-canvas {
@@ -802,6 +839,10 @@ onUnmounted(() => {
   width: min(500px, 100%);
   min-height: 640px;
   padding: 18px;
+  display: grid;
+  grid-auto-rows: max-content;
+  align-content: center;
+  gap: 8px;
   border-radius: 18px;
   border: 1px solid var(--ag-border-soft);
   background: rgba(255, 255, 255, 0.94);
@@ -875,7 +916,7 @@ onUnmounted(() => {
 }
 
 .auth-form {
-  margin-top: 6px;
+  margin-top: 0;
   display: grid;
   gap: 10px;
 }
@@ -935,7 +976,7 @@ onUnmounted(() => {
 }
 
 .divider {
-  margin-top: 8px;
+  margin-top: 2px;
   position: relative;
   text-align: center;
 }
@@ -956,7 +997,7 @@ onUnmounted(() => {
 }
 
 .oauth-row {
-  margin-top: 8px;
+  margin-top: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
@@ -979,7 +1020,7 @@ onUnmounted(() => {
 }
 
 .feedback-text {
-  margin-top: 10px;
+  margin-top: 2px;
 }
 
 @media (max-width: 980px) {
@@ -1017,13 +1058,6 @@ onUnmounted(() => {
     padding-top: 18px;
     padding-bottom: 20px;
   }
-
-  .auth-layout--to-register .auth-canvas,
-  .auth-layout--to-register .auth-shell,
-  .auth-layout--to-login .auth-canvas,
-  .auth-layout--to-login .auth-shell {
-    animation: none;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1043,6 +1077,7 @@ onUnmounted(() => {
   .auth-card {
     min-height: auto;
     padding: 18px 16px;
+    align-content: start;
   }
 
   .head-top,
@@ -1064,13 +1099,5 @@ onUnmounted(() => {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .auth-layout--to-register .auth-canvas,
-  .auth-layout--to-register .auth-shell,
-  .auth-layout--to-login .auth-canvas,
-  .auth-layout--to-login .auth-shell {
-    animation: none;
-  }
-}
 </style>
 
