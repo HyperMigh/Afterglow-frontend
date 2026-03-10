@@ -4,11 +4,21 @@ function createRequestId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
 }
 
+function resolveApiBase() {
+  const configuredBase = import.meta.env.VITE_API_BASE_URL;
+  if (typeof configuredBase === "string" && configuredBase.trim()) {
+    return configuredBase.trim();
+  }
+  return "/api";
+}
+
 function buildWsUrl(token) {
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
-  const base = apiBase.replace(/\/api\/?$/, "");
+  const apiBase = resolveApiBase();
+  const absoluteApiBase = /^https?:\/\//i.test(apiBase) ? apiBase : new URL(apiBase, window.location.origin).toString();
+  const base = absoluteApiBase.replace(/\/api\/?$/, "");
   const wsBase = base.startsWith("https://") ? base.replace("https://", "wss://") : base.replace("http://", "ws://");
-  const url = new URL(`${wsBase}/ws`);
+  const normalizedWsBase = wsBase.endsWith("/") ? wsBase.slice(0, -1) : wsBase;
+  const url = new URL(`${normalizedWsBase}/ws`);
   if (token) {
     url.searchParams.set("token", token);
   }

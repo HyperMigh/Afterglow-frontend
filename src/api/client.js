@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+const baseURL = import.meta.env.VITE_API_BASE_URL || "/api";
 const TOKEN_KEY = "afterglow_access_token";
 
 export const apiClient = axios.create({
@@ -63,6 +63,7 @@ function normalizeHttpError(error) {
   const httpStatus = error?.response?.status || null;
   const backendMessage = error?.response?.data?.message;
   const fallbackMessage = error?.message || "Network request failed";
+  const requestTarget = resolveRequestTarget(error);
   let message = backendMessage || fallbackMessage;
 
   if (!backendMessage && httpStatus === 503) {
@@ -72,7 +73,9 @@ function normalizeHttpError(error) {
   } else if (!backendMessage && httpStatus === 504) {
     message = "Gateway timeout (504). Please retry later.";
   } else if (!backendMessage && error?.code === "ERR_NETWORK") {
-    message = "Cannot reach backend. Check whether api-gateway is running.";
+    message = requestTarget
+      ? `Cannot reach backend (${requestTarget}). Check api-gateway and Vite proxy target.`
+      : "Cannot reach backend. Check whether api-gateway is running.";
   }
 
   const normalized = new Error(message);
@@ -80,4 +83,19 @@ function normalizeHttpError(error) {
   normalized.httpStatus = httpStatus;
   normalized.requestId = error?.response?.headers?.["x-request-id"] || null;
   return normalized;
+}
+
+function resolveRequestTarget(error) {
+  const requestUrl = error?.config?.url;
+  if (typeof requestUrl !== "string" || !requestUrl) {
+    return null;
+  }
+
+  const requestBase = error?.config?.baseURL;
+  const fallbackOrigin = typeof window !== "undefined" ? window.location.origin : "http://localhost";
+  try {
+    return new URL(requestUrl, requestBase || fallbackOrigin).toString();
+  } catch {
+    return requestBase ? `${requestBase}${requestUrl}` : requestUrl;
+  }
 }
