@@ -1,12 +1,6 @@
 import { defineStore } from "pinia";
 import { fetchPalette } from "../api/modules/emotion";
-
-function normalizeErrorMessage(error, fallbackText) {
-  if (!error) {
-    return fallbackText;
-  }
-  return error.message || fallbackText;
-}
+import { normalizeErrorMessage } from "../utils/error";
 
 export const useEmotionStore = defineStore("emotion", {
   state: () => ({

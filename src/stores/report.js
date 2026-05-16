@@ -1,12 +1,6 @@
 import { defineStore } from "pinia";
 import { createReport } from "../api/modules/report";
-
-function normalizeErrorMessage(error, fallbackText) {
-  if (!error) {
-    return fallbackText;
-  }
-  return error.message || fallbackText;
-}
+import { normalizeErrorMessage } from "../utils/error";
 
 export const useReportStore = defineStore("report", {
   state: () => ({

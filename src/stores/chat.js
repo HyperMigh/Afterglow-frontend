@@ -9,13 +9,7 @@ import {
 import { fetchDiscoverUsers } from "../api/modules/user";
 import { wsClient } from "../api/ws-client";
 import { useAuthStore } from "./auth";
-
-function normalizeErrorMessage(error, fallbackText) {
-  if (!error) {
-    return fallbackText;
-  }
-  return error.message || fallbackText;
-}
+import { normalizeErrorMessage } from "../utils/error";
 
 function toMillis(value) {
   if (!value) {

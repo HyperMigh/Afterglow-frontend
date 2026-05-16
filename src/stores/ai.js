@@ -1,12 +1,6 @@
 import { defineStore } from "pinia";
 import { createMirrorSession, fetchMirrorHistory } from "../api/modules/ai";
-
-function normalizeErrorMessage(error, fallbackText) {
-  if (!error) {
-    return fallbackText;
-  }
-  return error.message || fallbackText;
-}
+import { normalizeErrorMessage } from "../utils/error";
 
 export const useAiStore = defineStore("ai", {
   state: () => ({

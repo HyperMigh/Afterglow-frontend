@@ -119,6 +119,10 @@ class WsClient {
       this.emit("__status__", { type: "open" });
     };
 
+    this.socket.onerror = (event) => {
+      this.emit("__status__", { type: "error" });
+    };
+
     this.socket.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
@@ -129,14 +133,15 @@ class WsClient {
       }
     };
 
-    this.socket.onerror = () => {
-      this.emit("__status__", { type: "error" });
-    };
-
-    this.socket.onclose = () => {
-      this.emit("__status__", { type: "close" });
+    this.socket.onclose = (event) => {
+      this.emit("__status__", { type: "close", code: event.code });
       this.socket = null;
       if (!this.shouldReconnect) {
+        return;
+      }
+      const maxReconnectAttempts = 10;
+      if (this.reconnectAttempt >= maxReconnectAttempts) {
+        this.emit("__status__", { type: "reconnect_exhausted", attempts: this.reconnectAttempt });
         return;
       }
       const delay = Math.min(30000, 1000 * 2 ** this.reconnectAttempt);

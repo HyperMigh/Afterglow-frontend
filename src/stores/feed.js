@@ -7,13 +7,7 @@ import {
   fetchTimeline,
   reactPost
 } from "../api/modules/feed";
-
-function normalizeErrorMessage(error, fallbackText) {
-  if (!error) {
-    return fallbackText;
-  }
-  return error.message || fallbackText;
-}
+import { normalizeErrorMessage } from "../utils/error";
 
 export const useFeedStore = defineStore("feed", {
   state: () => ({
