@@ -54,7 +54,7 @@ const classList = computed(() => [
   padding: 10px 16px;
   font-weight: 600;
   font-size: 14px;
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
   letter-spacing: -0.01em;
   line-height: 1;
   color: var(--ag-text-soft);

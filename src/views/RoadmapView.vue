@@ -106,7 +106,7 @@ const roadmapMilestones = computed(() => t("roadmap.milestones") || []);
 .milestone-card h3 {
   margin: 8px 0 10px;
   font-size: 20px;
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
 @media (max-width: 960px) {

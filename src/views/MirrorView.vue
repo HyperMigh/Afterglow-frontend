@@ -137,7 +137,7 @@ onMounted(async () => {
 .mirror-block h3 {
   margin: 0 0 6px;
   font-size: 18px;
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
 .mirror-block p {

@@ -236,7 +236,7 @@ onMounted(async () => {
 .main-head h2,
 .message-head h3 {
   margin: 0;
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
 .quick-line {
