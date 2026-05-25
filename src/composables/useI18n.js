@@ -1,55 +1,40 @@
 import { computed } from "vue";
-import { useLocaleStore } from "../stores/locale";
-import { messages } from "../i18n/messages";
+import { useI18n as useVueI18n } from "vue-i18n";
+import { useLocaleStore } from "@/stores/locale";
 
-const FALLBACK_LOCALE = "zh";
-
-function getByPath(source, path) {
-  return path.split(".").reduce((current, key) => {
-    if (current && typeof current === "object" && key in current) {
-      return current[key];
-    }
-    return undefined;
-  }, source);
-}
-
-function interpolate(template, params = {}) {
-  if (!params || typeof params !== "object") {
-    return template;
-  }
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
-    if (key in params) {
-      return String(params[key]);
-    }
-    return "";
-  });
-}
-
+/**
+ * Project-wide translation helper.
+ *
+ * Wraps vue-i18n's composition API so callers can keep using the existing API:
+ *   const { t, locale, isEnglish, toggleLocale } = useI18n();
+ *   t("home.heroTitle")
+ *   t("authPortal.codeSentWithRemaining", { seconds: 30 })
+ *   t("home.productFeatures")  // returns an array of objects (uses tm())
+ */
 export function useI18n() {
+  const { t: vueT, tm, locale, rt } = useVueI18n();
   const localeStore = useLocaleStore();
 
-  const locale = computed(() => {
-    const current = localeStore.locale;
-    return messages[current] ? current : FALLBACK_LOCALE;
-  });
-
-  const currentMessages = computed(() => messages[locale.value] || messages[FALLBACK_LOCALE]);
-
   function t(path, params) {
-    let value = getByPath(currentMessages.value, path);
-    if (value === undefined) {
-      value = getByPath(messages[FALLBACK_LOCALE], path);
+    // tm returns the raw message (string, array, object). When it's a primitive
+    // string we still want vue-i18n's interpolation, so fall back to vueT.
+    const raw = tm(path);
+    if (raw === undefined || raw === null) {
+      return vueT(path, params || {});
     }
-
-    if (typeof value === "string") {
-      return interpolate(value, params);
+    if (typeof raw === "string") {
+      return vueT(path, params || {});
     }
-    return value;
+    if (Array.isArray(raw)) {
+      // Resolve each entry. Strings can use rt() for interpolation; objects pass through.
+      return raw.map((item) => (typeof item === "string" ? rt(item, params || {}) : item));
+    }
+    return raw;
   }
 
   return {
     t,
-    locale,
+    locale: computed(() => locale.value),
     isEnglish: computed(() => locale.value === "en"),
     toggleLocale: () => localeStore.toggleLocale()
   };

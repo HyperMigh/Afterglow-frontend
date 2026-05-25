@@ -1,15 +1,18 @@
 <script setup>
-import { computed, onMounted, reactive } from "vue";
+import { computed, onMounted, onUnmounted, reactive } from "vue";
 import { storeToRefs } from "pinia";
-import { useI18n } from "../composables/useI18n";
-import UiButton from "../components/ui/UiButton.vue";
-import UiCard from "../components/ui/UiCard.vue";
-import UiInput from "../components/ui/UiInput.vue";
-import UiStatus from "../components/ui/UiStatus.vue";
-import { useChatStore } from "../stores/chat";
+import { useI18n } from "@/composables/useI18n";
+import { useStoreErrorToast } from "@/composables/useStoreErrorToast";
+import UiButton from "@/components/ui/UiButton.vue";
+import UiCard from "@/components/ui/UiCard.vue";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiStatus from "@/components/ui/UiStatus.vue";
+import { useChatStore } from "@/stores/chat";
 
 const chatStore = useChatStore();
 const { t } = useI18n();
+
+useStoreErrorToast(chatStore);
 const {
   conversations,
   discoverUsers,
@@ -30,8 +33,8 @@ const form = reactive({
   message: ""
 });
 
-const currentConversation = computed(() =>
-  conversations.value.find((item) => item.conversationId === currentConversationId.value) || null
+const currentConversation = computed(
+  () => conversations.value.find((item) => item.conversationId === currentConversationId.value) || null
 );
 const currentMessages = computed(() => messagesByConversation.value[currentConversationId.value] || []);
 const canSend = computed(() => Boolean(currentConversationId.value && form.message.trim()));
@@ -75,6 +78,10 @@ async function onLoadOlder() {
 onMounted(async () => {
   await chatStore.bootstrap();
 });
+
+onUnmounted(() => {
+  chatStore.teardown();
+});
 </script>
 
 <template>
@@ -93,7 +100,12 @@ onMounted(async () => {
     <UiCard as="article" variant="panel" class="chat-side">
       <div class="side-head">
         <h2>{{ t("chat.startConversation") }}</h2>
-        <UiButton variant="ghost" size="sm" :disabled="loadingDiscoverUsers" @click="chatStore.loadDiscoverUsers()">
+        <UiButton
+          variant="ghost"
+          size="sm"
+          :disabled="loadingDiscoverUsers"
+          @click="chatStore.loadDiscoverUsers()"
+        >
           {{ loadingDiscoverUsers ? t("chat.refreshing") : t("chat.refreshCandidates") }}
         </UiButton>
       </div>
@@ -108,7 +120,9 @@ onMounted(async () => {
               @update:model-value="(value) => (form.targetUserId = value)"
               @keyup.enter="onCreateConversation(form.targetUserId)"
             />
-            <UiButton variant="ghost" @click="onCreateConversation(form.targetUserId)">{{ t("chat.start") }}</UiButton>
+            <UiButton variant="ghost" @click="onCreateConversation(form.targetUserId)">{{
+              t("chat.start")
+            }}</UiButton>
           </div>
         </label>
       </div>
@@ -126,7 +140,12 @@ onMounted(async () => {
     <UiCard as="article" variant="panel" class="chat-main">
       <div class="main-head">
         <h2>{{ t("chat.conversationList") }}</h2>
-        <UiButton variant="ghost" size="sm" :disabled="loading" @click="chatStore.loadConversations({ reset: true })">
+        <UiButton
+          variant="ghost"
+          size="sm"
+          :disabled="loading"
+          @click="chatStore.loadConversations({ reset: true })"
+        >
           {{ loading ? t("chat.loading") : t("chat.refreshConversation") }}
         </UiButton>
       </div>
@@ -152,8 +171,12 @@ onMounted(async () => {
         </li>
       </ul>
 
-      <div class="hero-actions" v-if="hasMore">
-        <UiButton variant="text" :disabled="loadingMore" @click="chatStore.loadConversations({ reset: false })">
+      <div v-if="hasMore" class="hero-actions">
+        <UiButton
+          variant="text"
+          :disabled="loadingMore"
+          @click="chatStore.loadConversations({ reset: false })"
+        >
           {{ loadingMore ? t("chat.loading") : t("chat.loadMoreConversations") }}
         </UiButton>
       </div>
@@ -168,7 +191,9 @@ onMounted(async () => {
             :disabled="!messageHasMoreByConversation[currentConversationId]"
             @click="onLoadOlder"
           >
-            {{ loadingMessagesByConversation[currentConversationId] ? t("chat.loading") : t("chat.loadOlder") }}
+            {{
+              loadingMessagesByConversation[currentConversationId] ? t("chat.loading") : t("chat.loadOlder")
+            }}
           </UiButton>
         </header>
 
@@ -236,7 +261,8 @@ onMounted(async () => {
 .main-head h2,
 .message-head h3 {
   margin: 0;
-  font-family: "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
 .quick-line {

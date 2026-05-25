@@ -37,12 +37,7 @@ const classList = computed(() => [
 </script>
 
 <template>
-  <button
-    :type="type"
-    :disabled="disabled"
-    :class="classList"
-    @click="(event) => emit('click', event)"
-  >
+  <button :type="type" :disabled="disabled" :class="classList" @click="(event) => emit('click', event)">
     <slot />
   </button>
 </template>
@@ -54,7 +49,8 @@ const classList = computed(() => [
   padding: 10px 16px;
   font-weight: 600;
   font-size: 14px;
-  font-family: "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
   letter-spacing: -0.01em;
   line-height: 1;
   color: var(--ag-text-soft);

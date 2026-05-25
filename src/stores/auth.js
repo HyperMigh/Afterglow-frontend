@@ -1,21 +1,25 @@
 ﻿import { defineStore } from "pinia";
 import {
-  clearStoredAccessToken,
+  clearStoredTokens,
   getStoredAccessToken,
-  setStoredAccessToken
-} from "../api/client";
+  getStoredRefreshToken,
+  setAuthLostHandler,
+  setStoredAccessToken,
+  setStoredRefreshToken
+} from "@/api/client";
 import {
   fetchCaptcha,
   fetchMe,
   loginByEmailCode,
   registerByEmailCode,
   sendEmailCode
-} from "../api/modules/auth";
-import { normalizeErrorMessage } from "../utils/error";
+} from "@/api/modules/auth";
+import { normalizeErrorMessage } from "@/utils/error";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     token: getStoredAccessToken(),
+    refreshToken: getStoredRefreshToken(),
     me: null,
     loading: false,
     sendingCode: false,
@@ -59,8 +63,7 @@ export const useAuthStore = defineStore("auth", {
       this.error = null;
       try {
         const result = await loginByEmailCode(payload);
-        this.token = result.accessToken;
-        setStoredAccessToken(result.accessToken);
+        this.applyTokens(result);
         this.me = result.user;
         return result;
       } catch (error) {
@@ -76,8 +79,7 @@ export const useAuthStore = defineStore("auth", {
       this.error = null;
       try {
         const result = await registerByEmailCode(payload);
-        this.token = result.accessToken;
-        setStoredAccessToken(result.accessToken);
+        this.applyTokens(result);
         this.me = result.user;
         return result;
       } catch (error) {
@@ -109,11 +111,31 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    applyTokens(result) {
+      this.token = result.accessToken || null;
+      this.refreshToken = result.refreshToken || null;
+      setStoredAccessToken(this.token);
+      setStoredRefreshToken(this.refreshToken);
+    },
+
     logout() {
       this.token = null;
+      this.refreshToken = null;
       this.me = null;
       this.error = null;
-      clearStoredAccessToken();
+      clearStoredTokens();
     }
   }
 });
+
+// Wire client-side auth-loss handler so refresh failures clear the store too.
+let initialized = false;
+export function bindAuthLostHandler(authStore) {
+  if (initialized) return;
+  initialized = true;
+  setAuthLostHandler(() => {
+    authStore.token = null;
+    authStore.refreshToken = null;
+    authStore.me = null;
+  });
+}

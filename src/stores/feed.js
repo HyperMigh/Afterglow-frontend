@@ -6,8 +6,8 @@ import {
   fetchComments,
   fetchTimeline,
   reactPost
-} from "../api/modules/feed";
-import { normalizeErrorMessage } from "../utils/error";
+} from "@/api/modules/feed";
+import { normalizeErrorMessage } from "@/utils/error";
 
 export const useFeedStore = defineStore("feed", {
   state: () => ({

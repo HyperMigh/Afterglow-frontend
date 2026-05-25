@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { fetchBackendHealth, fetchHomeGreeting } from "../api/modules/system";
+import { fetchBackendHealth, fetchHomeGreeting } from "@/api/modules/system";
 
 export const useSystemStore = defineStore("system", {
   state: () => ({
@@ -13,10 +13,7 @@ export const useSystemStore = defineStore("system", {
       this.loading = true;
       this.error = null;
       try {
-        const [health, greeting] = await Promise.all([
-          fetchBackendHealth(),
-          fetchHomeGreeting()
-        ]);
+        const [health, greeting] = await Promise.all([fetchBackendHealth(), fetchHomeGreeting()]);
         this.health = health;
         this.greeting = greeting;
       } catch (error) {

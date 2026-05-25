@@ -1,9 +1,10 @@
 <script setup>
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { computed, onMounted, watch } from "vue";
-import { useAuthStore } from "./stores/auth";
-import { useThemeStore } from "./stores/theme";
-import { useI18n } from "./composables/useI18n";
+import { useAuthStore } from "@/stores/auth";
+import { useThemeStore } from "@/stores/theme";
+import { useI18n } from "@/composables/useI18n";
+import UiToastHost from "@/components/ui/UiToastHost.vue";
 
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
@@ -60,11 +61,15 @@ onMounted(async () => {
       </RouterLink>
 
       <nav class="links" aria-label="Main">
-        <RouterLink v-for="link in marketingLinks" :key="link.label" :to="link.to" class="nav-link">{{ link.label }}</RouterLink>
+        <RouterLink v-for="link in marketingLinks" :key="link.label" :to="link.to" class="nav-link">{{
+          link.label
+        }}</RouterLink>
       </nav>
 
       <nav class="nav-right" aria-label="Auth actions">
-        <RouterLink v-if="!authStore.isAuthenticated" to="/login" class="link-btn">{{ t("app.auth.login") }}</RouterLink>
+        <RouterLink v-if="!authStore.isAuthenticated" to="/login" class="link-btn">{{
+          t("app.auth.login")
+        }}</RouterLink>
         <button
           v-if="!authStore.isAuthenticated"
           type="button"
@@ -87,8 +92,12 @@ onMounted(async () => {
         >
           {{ localeToggleLabel }}
         </button>
-        <RouterLink v-if="authStore.isAuthenticated" to="/feed" class="link-btn">{{ t("app.auth.workspace") }}</RouterLink>
-        <button v-if="authStore.isAuthenticated" class="link-btn" @click="authStore.logout">{{ t("app.auth.logout") }}</button>
+        <RouterLink v-if="authStore.isAuthenticated" to="/feed" class="link-btn">{{
+          t("app.auth.workspace")
+        }}</RouterLink>
+        <button v-if="authStore.isAuthenticated" class="link-btn" @click="authStore.logout">
+          {{ t("app.auth.logout") }}
+        </button>
       </nav>
     </header>
 
@@ -96,6 +105,8 @@ onMounted(async () => {
       <RouterView />
     </main>
   </div>
+
+  <UiToastHost />
 </template>
 
 <style scoped>

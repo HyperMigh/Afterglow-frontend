@@ -83,11 +83,7 @@ export const messages = {
           items: ["安全控制", "SLA 支持", "定制集成"]
         }
       ],
-      docItems: [
-        "前后端快速启动指南。",
-        "认证与 API 集成说明。",
-        "部署与运行配置说明。"
-      ]
+      docItems: ["前后端快速启动指南。", "认证与 API 集成说明。", "部署与运行配置说明。"]
     },
     roadmap: {
       eyebrow: "路线图快照",
@@ -160,14 +156,14 @@ export const messages = {
       captchaFallback: "刷新",
       sendingCode: "发送中",
       sendCode: "发送验证码",
-      retryCode: "重试 {{seconds}}s",
+      retryCode: "重试 {}s",
       loggingIn: "登录中",
       creatingAccount: "注册中",
       submitLogin: "登录",
       submitSignup: "注册",
       defaultFeedbackLogin: "请输入邮箱验证码和图形验证码后继续。",
       defaultFeedbackSignup: "请完成邮箱验证码和图形验证码以完成注册。",
-      codeSentWithRemaining: "验证码已发送，剩余 {{seconds}}s。",
+      codeSentWithRemaining: "验证码已发送，剩余 {}s。",
       codeSentFallback: "验证码已发送，请尽快完成验证。",
       codeExpired: "验证码已过期，请重新获取。",
       loadCaptchaFailed: "加载图形验证码失败",
@@ -181,7 +177,7 @@ export const messages = {
       signupSuccess: "账号创建成功，正在跳转...",
       loginFailed: "登录失败",
       signupFailed: "注册失败",
-      oauthUnavailable: "{{provider}} 登录即将支持。",
+      oauthUnavailable: "{} 登录即将支持。",
       dividerText: "或使用以下方式继续"
     },
     feed: {
@@ -253,7 +249,7 @@ export const messages = {
       emptyConversation: "当前没有会话，先从左侧发起一个。",
       noMessage: "暂无消息",
       loadMoreConversations: "加载更多会话",
-      conversationWith: "与 {{name}} 的对话",
+      conversationWith: "与 {} 的对话",
       loadOlder: "加载更早消息",
       inputPlaceholder: "输入消息，Enter 发送",
       send: "发送",
@@ -303,7 +299,8 @@ export const messages = {
     home: {
       heroKicker: "Afterglow",
       heroTitle: "Build Better Products With Clarity.",
-      heroSubtitle: "Afterglow helps teams organize feedback, conversations, and decisions into clean and trustworthy execution.",
+      heroSubtitle:
+        "Afterglow helps teams organize feedback, conversations, and decisions into clean and trustworthy execution.",
       primaryCtaWorkspace: "Open Workspace",
       primaryCtaGetStarted: "Get Started",
       docsCta: "View Docs",
@@ -375,7 +372,8 @@ export const messages = {
     roadmap: {
       eyebrow: "Roadmap Snapshot",
       heroTitle: "The roadmap is moving from runnable to sustainably iterative.",
-      heroSubtitle: "The plan advances through five stages: close core business loops first, then expand real-time, emotion, and AI capabilities.",
+      heroSubtitle:
+        "The plan advances through five stages: close core business loops first, then expand real-time, emotion, and AI capabilities.",
       panelTitle: "Milestone Breakdown",
       milestones: [
         {
@@ -406,7 +404,11 @@ export const messages = {
           id: "M5",
           name: "AI Comfort Assistant",
           status: "Planned",
-          goals: ["Mirror suggestion generation", "Safety boundaries for sensitive scenarios", "Fallback and observability"]
+          goals: [
+            "Mirror suggestion generation",
+            "Safety boundaries for sensitive scenarios",
+            "Fallback and observability"
+          ]
         }
       ]
     },
@@ -443,14 +445,14 @@ export const messages = {
       captchaFallback: "Refresh",
       sendingCode: "Sending",
       sendCode: "Send code",
-      retryCode: "Retry {{seconds}}s",
+      retryCode: "Retry {}s",
       loggingIn: "Logging in",
       creatingAccount: "Creating account",
       submitLogin: "Login",
       submitSignup: "Sign up",
       defaultFeedbackLogin: "Enter your 6-digit code and captcha to continue.",
       defaultFeedbackSignup: "Complete verification details to finish registration.",
-      codeSentWithRemaining: "Verification code sent. {{seconds}}s remaining.",
+      codeSentWithRemaining: "Verification code sent. {}s remaining.",
       codeSentFallback: "Verification code sent. Please complete validation soon.",
       codeExpired: "Code expired. Please request a new one.",
       loadCaptchaFailed: "Failed to load captcha",
@@ -464,12 +466,13 @@ export const messages = {
       signupSuccess: "Account created. Redirecting...",
       loginFailed: "Login failed",
       signupFailed: "Signup failed",
-      oauthUnavailable: "{{provider}} login will be available soon.",
+      oauthUnavailable: "{} login will be available soon.",
       dividerText: "or continue with"
     },
     feed: {
       heroTitle: "Community Feed",
-      heroSubtitle: "Posting, comments, likes, reports, and cursor pagination are integrated. The current focus is interaction continuity and readability.",
+      heroSubtitle:
+        "Posting, comments, likes, reports, and cursor pagination are integrated. The current focus is interaction continuity and readability.",
       statPosts: "Posts",
       statLikes: "Likes",
       statComments: "Comments",
@@ -521,7 +524,8 @@ export const messages = {
     },
     chat: {
       heroTitle: "Direct Messages",
-      heroSubtitle: "Supports conversation creation, message history, HTTP fallback sending, and real-time WebSocket sync.",
+      heroSubtitle:
+        "Supports conversation creation, message history, HTTP fallback sending, and real-time WebSocket sync.",
       wsConnected: "WebSocket connected",
       wsDisconnected: "WebSocket disconnected (HTTP fallback active)",
       startConversation: "Start Conversation",
@@ -536,7 +540,7 @@ export const messages = {
       emptyConversation: "No conversations yet. Start one from the left panel.",
       noMessage: "No message",
       loadMoreConversations: "Load more conversations",
-      conversationWith: "Conversation with {{name}}",
+      conversationWith: "Conversation with {}",
       loadOlder: "Load older messages",
       inputPlaceholder: "Type a message, press Enter to send",
       send: "Send",
@@ -546,7 +550,8 @@ export const messages = {
     },
     mirror: {
       heroTitle: "Mirror",
-      heroSubtitle: "Based on the latest 24h content, returns summary / suggestion / question with safety flags.",
+      heroSubtitle:
+        "Based on the latest 24h content, returns summary / suggestion / question with safety flags.",
       running: "Running...",
       runLatest: "Generate latest mirror",
       refreshing: "Refreshing...",

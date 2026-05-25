@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { fetchPalette } from "../api/modules/emotion";
-import { normalizeErrorMessage } from "../utils/error";
+import { fetchPalette } from "@/api/modules/emotion";
+import { normalizeErrorMessage } from "@/utils/error";
 
 export const useEmotionStore = defineStore("emotion", {
   state: () => ({

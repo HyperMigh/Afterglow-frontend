@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { createReport } from "../api/modules/report";
-import { normalizeErrorMessage } from "../utils/error";
+import { createReport } from "@/api/modules/report";
+import { normalizeErrorMessage } from "@/utils/error";
 
 export const useReportStore = defineStore("report", {
   state: () => ({

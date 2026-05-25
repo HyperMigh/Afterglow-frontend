@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { createMirrorSession, fetchMirrorHistory } from "../api/modules/ai";
-import { normalizeErrorMessage } from "../utils/error";
+import { createMirrorSession, fetchMirrorHistory } from "@/api/modules/ai";
+import { normalizeErrorMessage } from "@/utils/error";
 
 export const useAiStore = defineStore("ai", {
   state: () => ({

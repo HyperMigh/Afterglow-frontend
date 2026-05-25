@@ -1,14 +1,17 @@
 <script setup>
 import { computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { useI18n } from "../composables/useI18n";
-import UiButton from "../components/ui/UiButton.vue";
-import UiCard from "../components/ui/UiCard.vue";
-import UiStatus from "../components/ui/UiStatus.vue";
-import { useAiStore } from "../stores/ai";
+import { useI18n } from "@/composables/useI18n";
+import { useStoreErrorToast } from "@/composables/useStoreErrorToast";
+import UiButton from "@/components/ui/UiButton.vue";
+import UiCard from "@/components/ui/UiCard.vue";
+import UiStatus from "@/components/ui/UiStatus.vue";
+import { useAiStore } from "@/stores/ai";
 
 const aiStore = useAiStore();
 const { t } = useI18n();
+
+useStoreErrorToast(aiStore);
 const { latestSession, history, loading, loadingMore, hasMore, running, error } = storeToRefs(aiStore);
 
 const latestTone = computed(() => {
@@ -55,8 +58,7 @@ onMounted(async () => {
       <UiStatus v-else-if="!latestSession" tone="muted">{{ t("mirror.noLatest") }}</UiStatus>
       <div v-else class="mirror-latest">
         <UiStatus :tone="latestTone">
-          {{ t("mirror.riskFlags") }}:
-          selfHarm={{ latestSession.flags?.riskSelfHarm ? "true" : "false" }} ·
+          {{ t("mirror.riskFlags") }}: selfHarm={{ latestSession.flags?.riskSelfHarm ? "true" : "false" }} ·
           needsHelp={{ latestSession.flags?.needsHumanHelp ? "true" : "false" }}
         </UiStatus>
         <article class="mirror-block">
@@ -71,7 +73,9 @@ onMounted(async () => {
           <h3>{{ t("mirror.question") }}</h3>
           <p>{{ latestSession.question }}</p>
         </article>
-        <small class="muted">{{ t("mirror.generatedAt") }}: {{ formatDateTime(latestSession.createdAt) }}</small>
+        <small class="muted"
+          >{{ t("mirror.generatedAt") }}: {{ formatDateTime(latestSession.createdAt) }}</small
+        >
       </div>
     </UiCard>
   </section>
@@ -85,9 +89,15 @@ onMounted(async () => {
             <strong>#{{ item.sessionId }}</strong>
             <small>{{ formatDateTime(item.createdAt) }}</small>
           </header>
-          <p><b>{{ t("mirror.summary") }}:</b> {{ item.summary }}</p>
-          <p><b>{{ t("mirror.suggestion") }}:</b> {{ item.suggestion }}</p>
-          <p><b>{{ t("mirror.question") }}:</b> {{ item.question }}</p>
+          <p>
+            <b>{{ t("mirror.summary") }}:</b> {{ item.summary }}
+          </p>
+          <p>
+            <b>{{ t("mirror.suggestion") }}:</b> {{ item.suggestion }}
+          </p>
+          <p>
+            <b>{{ t("mirror.question") }}:</b> {{ item.question }}
+          </p>
           <small>
             {{ t("mirror.flagsPrefix") }}: selfHarm={{ item.flags?.riskSelfHarm ? "true" : "false" }},
             needsHelp={{ item.flags?.needsHumanHelp ? "true" : "false" }}
@@ -95,7 +105,7 @@ onMounted(async () => {
         </li>
       </ul>
 
-      <div class="hero-actions" v-if="hasMore">
+      <div v-if="hasMore" class="hero-actions">
         <UiButton variant="ghost" :disabled="loadingMore" @click="aiStore.loadHistory({ reset: false })">
           {{ loadingMore ? t("mirror.loadingMore") : t("mirror.loadMoreHistory") }}
         </UiButton>
@@ -137,7 +147,8 @@ onMounted(async () => {
 .mirror-block h3 {
   margin: 0 0 6px;
   font-size: 18px;
-  font-family: "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
 .mirror-block p {

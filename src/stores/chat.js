@@ -5,11 +5,11 @@ import {
   fetchMessages,
   markConversationRead,
   sendMessageByHttp
-} from "../api/modules/chat";
-import { fetchDiscoverUsers } from "../api/modules/user";
-import { wsClient } from "../api/ws-client";
+} from "@/api/modules/chat";
+import { fetchDiscoverUsers } from "@/api/modules/user";
+import { wsClient } from "@/api/ws-client";
 import { useAuthStore } from "./auth";
-import { normalizeErrorMessage } from "../utils/error";
+import { normalizeErrorMessage } from "@/utils/error";
 
 function toMillis(value) {
   if (!value) {
@@ -48,12 +48,38 @@ export const useChatStore = defineStore("chat", {
         return;
       }
       const store = this;
-      wsClient.on("__status__", (payload) => store.onWsStatus(payload));
-      wsClient.on("dm.new", (payload) => store.onWsDmNew(payload));
-      wsClient.on("conv.unread", (payload) => store.onWsConvUnread(payload));
-      wsClient.on("conv.read.sync", (payload) => store.onWsConvReadSync(payload));
-      wsClient.on("error", (payload) => store.onWsError(payload));
+      this._wsHandlers = {
+        status: (payload) => store.onWsStatus(payload),
+        dmNew: (payload) => store.onWsDmNew(payload),
+        convUnread: (payload) => store.onWsConvUnread(payload),
+        convReadSync: (payload) => store.onWsConvReadSync(payload),
+        error: (payload) => store.onWsError(payload)
+      };
+      wsClient.on("__status__", this._wsHandlers.status);
+      wsClient.on("dm.new", this._wsHandlers.dmNew);
+      wsClient.on("conv.unread", this._wsHandlers.convUnread);
+      wsClient.on("conv.read.sync", this._wsHandlers.convReadSync);
+      wsClient.on("error", this._wsHandlers.error);
       this.wsBound = true;
+    },
+
+    unbindWsEvents() {
+      if (!this.wsBound || !this._wsHandlers) {
+        return;
+      }
+      wsClient.off("__status__", this._wsHandlers.status);
+      wsClient.off("dm.new", this._wsHandlers.dmNew);
+      wsClient.off("conv.unread", this._wsHandlers.convUnread);
+      wsClient.off("conv.read.sync", this._wsHandlers.convReadSync);
+      wsClient.off("error", this._wsHandlers.error);
+      this._wsHandlers = null;
+      this.wsBound = false;
+    },
+
+    teardown() {
+      this.unbindWsEvents();
+      wsClient.disconnect();
+      this.connected = false;
     },
 
     onWsStatus: function onWsStatus(payload) {
@@ -94,15 +120,10 @@ export const useChatStore = defineStore("chat", {
       if (!data?.conversationId) {
         return;
       }
-      this.conversations = this.conversations.map((item) => {
-        if (item.conversationId !== data.conversationId) {
-          return item;
-        }
-        return {
-          ...item,
-          unread: Number(data.unread || 0)
-        };
-      });
+      const target = this.conversations.find((item) => item.conversationId === data.conversationId);
+      if (target) {
+        target.unread = Number(data.unread || 0);
+      }
     },
 
     onWsConvReadSync: function onWsConvReadSync(payload) {
@@ -193,43 +214,28 @@ export const useChatStore = defineStore("chat", {
       if (this.loadingMessagesByConversation[conversationId]) {
         return;
       }
-      this.loadingMessagesByConversation = {
-        ...this.loadingMessagesByConversation,
-        [conversationId]: true
-      };
+      this.loadingMessagesByConversation[conversationId] = true;
       this.error = null;
       try {
         const result = await fetchMessages(conversationId, { beforeId, limit });
         const nextRows = result.list || [];
         const currentRows = this.messagesByConversation[conversationId] || [];
-        let merged = [];
-        if (reset) {
-          merged = nextRows;
-        } else {
-          merged = nextRows.concat(currentRows);
-        }
+        const merged = reset ? nextRows : nextRows.concat(currentRows);
         const map = new Map();
         merged.forEach((item) => {
           const key = item.messageId || item.clientMsgId;
           map.set(key, item);
         });
-        const deduped = Array.from(map.values()).sort((a, b) => toMillis(a.createdAt) - toMillis(b.createdAt));
-        this.messagesByConversation = {
-          ...this.messagesByConversation,
-          [conversationId]: deduped
-        };
-        this.messageHasMoreByConversation = {
-          ...this.messageHasMoreByConversation,
-          [conversationId]: Boolean(result.hasMore)
-        };
+        const deduped = Array.from(map.values()).sort(
+          (a, b) => toMillis(a.createdAt) - toMillis(b.createdAt)
+        );
+        this.messagesByConversation[conversationId] = deduped;
+        this.messageHasMoreByConversation[conversationId] = Boolean(result.hasMore);
       } catch (error) {
         this.error = normalizeErrorMessage(error, "加载消息失败");
         throw error;
       } finally {
-        this.loadingMessagesByConversation = {
-          ...this.loadingMessagesByConversation,
-          [conversationId]: false
-        };
+        this.loadingMessagesByConversation[conversationId] = false;
       }
     },
 
@@ -305,15 +311,10 @@ export const useChatStore = defineStore("chat", {
       }
       try {
         const result = await markConversationRead(conversationId, { lastReadMessageId });
-        this.conversations = this.conversations.map((item) => {
-          if (item.conversationId !== conversationId) {
-            return item;
-          }
-          return {
-            ...item,
-            unread: Number(result.unread || 0)
-          };
-        });
+        const target = this.conversations.find((item) => item.conversationId === conversationId);
+        if (target) {
+          target.unread = Number(result.unread || 0);
+        }
       } catch (error) {
         this.error = normalizeErrorMessage(error, "同步已读状态失败");
       }
@@ -338,10 +339,7 @@ export const useChatStore = defineStore("chat", {
       const exists = replacedRows.some((item) => item.messageId === nextMessage.messageId);
       const merged = exists ? replacedRows : replacedRows.concat(nextMessage);
       merged.sort((a, b) => toMillis(a.createdAt) - toMillis(b.createdAt));
-      this.messagesByConversation = {
-        ...this.messagesByConversation,
-        [conversationId]: merged
-      };
+      this.messagesByConversation[conversationId] = merged;
     },
 
     bumpConversation(conversationId, payload) {

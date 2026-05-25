@@ -14,9 +14,13 @@ function resolveApiBase() {
 
 function buildWsUrl(token) {
   const apiBase = resolveApiBase();
-  const absoluteApiBase = /^https?:\/\//i.test(apiBase) ? apiBase : new URL(apiBase, window.location.origin).toString();
+  const absoluteApiBase = /^https?:\/\//i.test(apiBase)
+    ? apiBase
+    : new URL(apiBase, window.location.origin).toString();
   const base = absoluteApiBase.replace(/\/api\/?$/, "");
-  const wsBase = base.startsWith("https://") ? base.replace("https://", "wss://") : base.replace("http://", "ws://");
+  const wsBase = base.startsWith("https://")
+    ? base.replace("https://", "wss://")
+    : base.replace("http://", "ws://");
   const normalizedWsBase = wsBase.endsWith("/") ? wsBase.slice(0, -1) : wsBase;
   const url = new URL(`${normalizedWsBase}/ws`);
   if (token) {
@@ -108,7 +112,10 @@ class WsClient {
     if (!this.token) {
       return;
     }
-    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.socket &&
+      (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
@@ -119,7 +126,7 @@ class WsClient {
       this.emit("__status__", { type: "open" });
     };
 
-    this.socket.onerror = (event) => {
+    this.socket.onerror = () => {
       this.emit("__status__", { type: "error" });
     };
 
@@ -144,7 +151,9 @@ class WsClient {
         this.emit("__status__", { type: "reconnect_exhausted", attempts: this.reconnectAttempt });
         return;
       }
-      const delay = Math.min(30000, 1000 * 2 ** this.reconnectAttempt);
+      const baseDelay = Math.min(30000, 1000 * 2 ** this.reconnectAttempt);
+      const jitter = baseDelay * (Math.random() * 0.4 - 0.2); // ±20%
+      const delay = Math.max(500, Math.round(baseDelay + jitter));
       this.reconnectAttempt += 1;
       this.reconnectTimer = window.setTimeout(() => {
         this.openSocket();

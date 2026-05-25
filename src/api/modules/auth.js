@@ -19,3 +19,7 @@ export async function registerByEmailCode(payload) {
 export async function fetchMe() {
   return apiClient.get("/auth/me");
 }
+
+export async function refreshTokens(refreshToken) {
+  return apiClient.post("/auth/refresh", { refreshToken });
+}

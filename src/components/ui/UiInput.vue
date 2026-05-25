@@ -59,7 +59,10 @@ function onInput(event) {
   color: var(--ag-text);
   background: #ffffff;
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .ui-input::placeholder {

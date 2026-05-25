@@ -1,17 +1,21 @@
 <script setup>
 import { computed, onMounted, reactive } from "vue";
 import { storeToRefs } from "pinia";
-import { useFeedStore } from "../stores/feed";
-import { useReportStore } from "../stores/report";
-import { useI18n } from "../composables/useI18n";
-import UiButton from "../components/ui/UiButton.vue";
-import UiCard from "../components/ui/UiCard.vue";
-import UiInput from "../components/ui/UiInput.vue";
-import UiStatus from "../components/ui/UiStatus.vue";
+import { useFeedStore } from "@/stores/feed";
+import { useReportStore } from "@/stores/report";
+import { useI18n } from "@/composables/useI18n";
+import { useStoreErrorToast } from "@/composables/useStoreErrorToast";
+import UiButton from "@/components/ui/UiButton.vue";
+import UiCard from "@/components/ui/UiCard.vue";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiStatus from "@/components/ui/UiStatus.vue";
 
 const feedStore = useFeedStore();
 const reportStore = useReportStore();
 const { t } = useI18n();
+
+useStoreErrorToast(feedStore);
+useStoreErrorToast(reportStore);
 const { posts, loading, loadingMore, hasMore, publishing, error } = storeToRefs(feedStore);
 const { submittingTargetKeyMap, feedbackByTargetKey } = storeToRefs(reportStore);
 
@@ -26,10 +30,16 @@ const reportPanelOpenMap = reactive({});
 const reportFormMap = reactive({});
 
 const contentLength = computed(() => composer.content.trim().length);
-const canPublish = computed(() => contentLength.value > 0 && contentLength.value <= 2000 && !publishing.value);
+const canPublish = computed(
+  () => contentLength.value > 0 && contentLength.value <= 2000 && !publishing.value
+);
 const postCount = computed(() => posts.value.length);
-const totalLikeCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.likeCount || 0), 0));
-const totalCommentCount = computed(() => posts.value.reduce((sum, post) => sum + Number(post.commentCount || 0), 0));
+const totalLikeCount = computed(() =>
+  posts.value.reduce((sum, post) => sum + Number(post.likeCount || 0), 0)
+);
+const totalCommentCount = computed(() =>
+  posts.value.reduce((sum, post) => sum + Number(post.commentCount || 0), 0)
+);
 const reportReasonOptions = computed(() => t("feed.reportReasons") || []);
 
 function formatDateTime(value) {
@@ -215,7 +225,9 @@ onMounted(async () => {
     <UiCard as="article" variant="panel" class="timeline-panel">
       <div class="timeline-head">
         <h2>{{ t("feed.postListTitle") }}</h2>
-        <UiButton variant="text" :disabled="loading" @click="feedStore.loadFirstPage">{{ t("feed.reload") }}</UiButton>
+        <UiButton variant="text" :disabled="loading" @click="feedStore.loadFirstPage">{{
+          t("feed.reload")
+        }}</UiButton>
       </div>
 
       <UiStatus v-if="loading" tone="info">{{ t("feed.loadingTimeline") }}</UiStatus>
@@ -232,7 +244,9 @@ onMounted(async () => {
             </div>
             <small class="muted">{{ formatDateTime(post.createdAt) }}</small>
           </div>
-          <UiButton v-if="post.mine" variant="danger" size="sm" @click="onDeletePost(post.postId)">{{ t("feed.delete") }}</UiButton>
+          <UiButton v-if="post.mine" variant="danger" size="sm" @click="onDeletePost(post.postId)">{{
+            t("feed.delete")
+          }}</UiButton>
         </header>
 
         <p class="feed-content">{{ post.content }}</p>
@@ -243,9 +257,12 @@ onMounted(async () => {
         </ul>
 
         <div class="feed-actions">
-          <UiButton variant="text" size="sm" @click="onLikePost(post.postId)">{{ t("feed.like") }} {{ post.likeCount || 0 }}</UiButton>
+          <UiButton variant="text" size="sm" @click="onLikePost(post.postId)"
+            >{{ t("feed.like") }} {{ post.likeCount || 0 }}</UiButton
+          >
           <UiButton variant="text" size="sm" @click="onToggleComments(post.postId)">
-            {{ isCommentPanelOpen(post.postId) ? t("feed.collapseComments") : t("feed.comments") }} {{ post.commentCount || 0 }}
+            {{ isCommentPanelOpen(post.postId) ? t("feed.collapseComments") : t("feed.comments") }}
+            {{ post.commentCount || 0 }}
           </UiButton>
           <UiButton variant="text" size="sm" @click="onToggleReport('post', post.postId)">
             {{ isReportPanelOpen("post", post.postId) ? t("feed.collapseReport") : t("feed.report") }}
@@ -261,7 +278,9 @@ onMounted(async () => {
                 :value="ensureReportForm('post', post.postId).reason"
                 @change="(event) => (ensureReportForm('post', post.postId).reason = event.target.value)"
               >
-                <option v-for="item in reportReasonOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+                <option v-for="item in reportReasonOptions" :key="item.value" :value="item.value">
+                  {{ item.label }}
+                </option>
               </select>
             </label>
             <label class="field">
@@ -280,7 +299,9 @@ onMounted(async () => {
               :disabled="isReportSubmitting('post', post.postId)"
               @click="onSubmitReport('post', post.postId)"
             >
-              {{ isReportSubmitting("post", post.postId) ? t("feed.reportSubmitting") : t("feed.submitReport") }}
+              {{
+                isReportSubmitting("post", post.postId) ? t("feed.reportSubmitting") : t("feed.submitReport")
+              }}
             </UiButton>
           </div>
           <UiStatus v-if="getReportFeedback('post', post.postId)" tone="muted">
@@ -306,8 +327,12 @@ onMounted(async () => {
             </UiButton>
           </div>
 
-          <UiStatus v-if="feedStore.commentLoadingByPost[post.postId]" tone="muted">{{ t("feed.loadingComments") }}</UiStatus>
-          <UiStatus v-else-if="!(feedStore.commentsByPost[post.postId] || []).length" tone="muted">{{ t("feed.noComments") }}</UiStatus>
+          <UiStatus v-if="feedStore.commentLoadingByPost[post.postId]" tone="muted">{{
+            t("feed.loadingComments")
+          }}</UiStatus>
+          <UiStatus v-else-if="!(feedStore.commentsByPost[post.postId] || []).length" tone="muted">{{
+            t("feed.noComments")
+          }}</UiStatus>
 
           <ul class="comment-list">
             <li v-for="comment in feedStore.commentsByPost[post.postId] || []" :key="comment.commentId">

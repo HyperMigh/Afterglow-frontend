@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from "vue";
-import UiCard from "../components/ui/UiCard.vue";
-import { useI18n } from "../composables/useI18n";
+import UiCard from "@/components/ui/UiCard.vue";
+import { useI18n } from "@/composables/useI18n";
 
 const { t } = useI18n();
 const roadmapMilestones = computed(() => t("roadmap.milestones") || []);
@@ -106,7 +106,8 @@ const roadmapMilestones = computed(() => t("roadmap.milestones") || []);
 .milestone-card h3 {
   margin: 8px 0 10px;
   font-size: 20px;
-  font-family: "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    "SF Pro Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
 }
 
 @media (max-width: 960px) {

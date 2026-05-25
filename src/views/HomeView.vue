@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from "vue";
 import { storeToRefs } from "pinia";
-import { useAuthStore } from "../stores/auth";
-import { useI18n } from "../composables/useI18n";
+import { useAuthStore } from "@/stores/auth";
+import { useI18n } from "@/composables/useI18n";
 
 const authStore = useAuthStore();
 const { isAuthenticated } = storeToRefs(authStore);

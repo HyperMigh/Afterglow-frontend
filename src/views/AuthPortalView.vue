@@ -2,12 +2,12 @@
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { useAuthStore } from "../stores/auth";
-import { useI18n } from "../composables/useI18n";
-import UiButton from "../components/ui/UiButton.vue";
-import UiCard from "../components/ui/UiCard.vue";
-import UiInput from "../components/ui/UiInput.vue";
-import UiStatus from "../components/ui/UiStatus.vue";
+import { useAuthStore } from "@/stores/auth";
+import { useI18n } from "@/composables/useI18n";
+import UiButton from "@/components/ui/UiButton.vue";
+import UiCard from "@/components/ui/UiCard.vue";
+import UiInput from "@/components/ui/UiInput.vue";
+import UiStatus from "@/components/ui/UiStatus.vue";
 
 const FEEDBACK_CODE_SENT = "__EMAIL_CODE_SENT__";
 
@@ -74,7 +74,9 @@ const isCodeValid = computed(() => CODE_PATTERN.test(form.code.trim()));
 const isCaptchaValid = computed(() => CAPTCHA_PATTERN.test(form.captchaCode.trim()));
 const submitLoading = computed(() => (isLoginMode.value ? loggingIn.value : registering.value));
 const canSendCode = computed(() => cooldown.value <= 0 && !sendingCode.value);
-const canSubmit = computed(() => isEmailValid.value && isCodeValid.value && isCaptchaValid.value && !submitLoading.value);
+const canSubmit = computed(
+  () => isEmailValid.value && isCodeValid.value && isCaptchaValid.value && !submitLoading.value
+);
 const layoutClassList = computed(() => {
   const classes = [];
   if (isLayoutReversed.value) {
@@ -272,7 +274,12 @@ async function onSubmit() {
     }
     await router.replace(normalizeRedirect());
   } catch (error) {
-    setFeedback("error", authStore.error || error.message || (isLoginMode.value ? t("authPortal.loginFailed") : t("authPortal.signupFailed")));
+    setFeedback(
+      "error",
+      authStore.error ||
+        error.message ||
+        (isLoginMode.value ? t("authPortal.loginFailed") : t("authPortal.signupFailed"))
+    );
     form.captchaCode = "";
     await refreshCaptcha();
   }
@@ -501,12 +508,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section
-    ref="authPageRef"
-    class="auth-page"
-    @pointermove="onPointerMove"
-    @pointerdown="onPointerDown"
-  >
+  <section ref="authPageRef" class="auth-page" @pointermove="onPointerMove" @pointerdown="onPointerDown">
     <div class="mouse-glow-layer" aria-hidden="true">
       <span
         v-for="dot in glowDots"
@@ -538,11 +540,7 @@ onUnmounted(() => {
         </div>
 
         <div class="canvas-slogan-list">
-          <p
-            v-for="(slogan, index) in canvasSlogans"
-            :key="`${scene}-${index}`"
-            class="canvas-slogan"
-          >
+          <p v-for="(slogan, index) in canvasSlogans" :key="`${scene}-${index}`" class="canvas-slogan">
             {{ slogan }}
           </p>
         </div>
@@ -565,10 +563,19 @@ onUnmounted(() => {
           <header class="auth-head">
             <div class="head-top">
               <div class="mode-tabs" role="tablist" :aria-label="t('authPortal.modeAriaLabel')">
-                <RouterLink to="/login" class="mode-tab" :class="{ active: isLoginMode }">{{ t("authPortal.loginTab") }}</RouterLink>
-                <RouterLink to="/register" class="mode-tab" :class="{ active: !isLoginMode }">{{ t("authPortal.signupTab") }}</RouterLink>
+                <RouterLink to="/login" class="mode-tab" :class="{ active: isLoginMode }">{{
+                  t("authPortal.loginTab")
+                }}</RouterLink>
+                <RouterLink to="/register" class="mode-tab" :class="{ active: !isLoginMode }">{{
+                  t("authPortal.signupTab")
+                }}</RouterLink>
               </div>
-              <button type="button" class="locale-switch-btn" :aria-label="localeToggleAriaLabel" @click="toggleLocale">
+              <button
+                type="button"
+                class="locale-switch-btn"
+                :aria-label="localeToggleAriaLabel"
+                @click="toggleLocale"
+              >
                 {{ localeToggleLabel }}
               </button>
             </div>
@@ -617,7 +624,12 @@ onUnmounted(() => {
                   @update:model-value="(value) => (form.captchaCode = value)"
                 />
                 <button type="button" class="captcha-image-btn" @click="refreshCaptcha">
-                  <img v-if="captcha.imageData" :src="captcha.imageData" :alt="t('authPortal.captchaAlt')" class="captcha-image" />
+                  <img
+                    v-if="captcha.imageData"
+                    :src="captcha.imageData"
+                    :alt="t('authPortal.captchaAlt')"
+                    class="captcha-image"
+                  />
                   <span v-else class="captcha-fallback">{{ t("authPortal.captchaFallback") }}</span>
                 </button>
               </div>
@@ -631,7 +643,9 @@ onUnmounted(() => {
             </UiButton>
           </form>
 
-          <div class="divider"><span>{{ t("authPortal.dividerText") }}</span></div>
+          <div class="divider">
+            <span>{{ t("authPortal.dividerText") }}</span>
+          </div>
 
           <div class="oauth-row">
             <button type="button" class="oauth-btn" @click="onOAuth('Google')">Google</button>
@@ -718,8 +732,12 @@ onUnmounted(() => {
   gap: 14px;
   padding: clamp(18px, 2.8vw, 30px);
   border-right: 1px solid rgba(221, 229, 238, 0.86);
-  background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 251, 255, 0.92) 58%, rgba(246, 249, 255, 0.98) 100%);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(248, 251, 255, 0.92) 58%,
+    rgba(246, 249, 255, 0.98) 100%
+  );
 }
 
 .canvas-aurora {
@@ -894,7 +912,9 @@ onUnmounted(() => {
   color: var(--ag-text-soft);
   background: #ffffff;
   cursor: pointer;
-  transition: border-color 0.18s ease, background-color 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .locale-switch-btn:hover {
@@ -950,7 +970,9 @@ onUnmounted(() => {
   height: 44px;
   overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.18s ease, background-color 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease;
 }
 
 .captcha-image-btn:hover {
@@ -1011,7 +1033,9 @@ onUnmounted(() => {
   background: #ffffff;
   color: var(--ag-text);
   cursor: pointer;
-  transition: background-color 0.18s ease, border-color 0.18s ease;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .oauth-btn:hover {
@@ -1098,6 +1122,4 @@ onUnmounted(() => {
     min-height: 44px;
   }
 }
-
 </style>
-
