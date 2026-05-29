@@ -12,7 +12,8 @@ const routes = [
   {
     path: "/",
     name: "home",
-    component: HomeView
+    component: HomeView,
+    meta: { layout: "marketing" }
   },
   {
     path: "/roadmap",

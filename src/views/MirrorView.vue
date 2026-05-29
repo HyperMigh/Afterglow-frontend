@@ -6,6 +6,7 @@ import { useStoreErrorToast } from "@/composables/useStoreErrorToast";
 import UiButton from "@/components/ui/UiButton.vue";
 import UiCard from "@/components/ui/UiCard.vue";
 import UiStatus from "@/components/ui/UiStatus.vue";
+import UiLoadingState from "@/components/ui/UiLoadingState.vue";
 import { useAiStore } from "@/stores/ai";
 
 const aiStore = useAiStore();
@@ -83,7 +84,8 @@ onMounted(async () => {
   <section class="grid single">
     <UiCard as="article" variant="panel">
       <h2>{{ t("mirror.historyTitle") }}</h2>
-      <ul class="mirror-history">
+      <UiLoadingState v-if="loading && !history.length" :label="t('mirror.refreshing')" />
+      <ul v-else class="mirror-history">
         <li v-for="item in history" :key="item.sessionId" class="history-card">
           <header>
             <strong>#{{ item.sessionId }}</strong>

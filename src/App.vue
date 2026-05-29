@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useThemeStore } from "@/stores/theme";
 import { useI18n } from "@/composables/useI18n";
 import UiToastHost from "@/components/ui/UiToastHost.vue";
+import MarketingLayout from "@/layouts/MarketingLayout.vue";
 
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
@@ -12,12 +13,15 @@ const route = useRoute();
 const { t, locale, isEnglish, toggleLocale } = useI18n();
 
 const isAuthLayout = computed(() => route.meta.layout === "auth");
+const isMarketingLayout = computed(() => route.meta.layout === "marketing");
 
-const marketingLinks = computed(() => [
+/** 顶栏固定：产品 / 方案 / 定价 / 文档 / 路线图（与营销站一致） */
+const primaryNavLinks = computed(() => [
   { label: t("app.links.product"), to: { path: "/", hash: "#product" } },
   { label: t("app.links.solutions"), to: { path: "/", hash: "#solutions" } },
   { label: t("app.links.pricing"), to: { path: "/", hash: "#pricing" } },
-  { label: t("app.links.docs"), to: { path: "/", hash: "#docs" } }
+  { label: t("app.links.docs"), to: { path: "/", hash: "#docs" } },
+  { label: t("app.links.roadmap"), to: { name: "roadmap" } }
 ]);
 const localeToggleLabel = computed(() => (isEnglish.value ? "中" : "EN"));
 const localeToggleAriaLabel = computed(() =>
@@ -50,6 +54,10 @@ onMounted(async () => {
     <RouterView />
   </div>
 
+  <MarketingLayout v-else-if="isMarketingLayout">
+    <RouterView />
+  </MarketingLayout>
+
   <div v-else class="app-shell">
     <header class="top-nav">
       <RouterLink to="/" class="brand">
@@ -61,12 +69,27 @@ onMounted(async () => {
       </RouterLink>
 
       <nav class="links" aria-label="Main">
-        <RouterLink v-for="link in marketingLinks" :key="link.label" :to="link.to" class="nav-link">{{
-          link.label
-        }}</RouterLink>
+        <RouterLink
+          v-for="link in primaryNavLinks"
+          :key="link.label"
+          :to="link.to"
+          class="nav-link"
+          active-class="nav-link-active"
+        >
+          {{ link.label }}
+        </RouterLink>
       </nav>
 
       <nav class="nav-right" aria-label="Auth actions">
+        <button
+          type="button"
+          class="link-btn theme-toggle-btn"
+          :aria-label="t('app.themeToggleAria')"
+          :title="t('app.themeToggle')"
+          @click="themeStore.toggleTheme()"
+        >
+          {{ themeStore.isDark ? "☀" : "☾" }}
+        </button>
         <RouterLink v-if="!authStore.isAuthenticated" to="/login" class="link-btn">{{
           t("app.auth.login")
         }}</RouterLink>

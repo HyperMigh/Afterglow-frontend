@@ -9,6 +9,8 @@ import UiButton from "@/components/ui/UiButton.vue";
 import UiCard from "@/components/ui/UiCard.vue";
 import UiInput from "@/components/ui/UiInput.vue";
 import UiStatus from "@/components/ui/UiStatus.vue";
+import UiLoadingState from "@/components/ui/UiLoadingState.vue";
+import EmotionBadge from "@/components/EmotionBadge.vue";
 
 const feedStore = useFeedStore();
 const reportStore = useReportStore();
@@ -230,7 +232,7 @@ onMounted(async () => {
         }}</UiButton>
       </div>
 
-      <UiStatus v-if="loading" tone="info">{{ t("feed.loadingTimeline") }}</UiStatus>
+      <UiLoadingState v-if="loading" :label="t('feed.loadingTimeline')" />
       <UiStatus v-else-if="error" tone="error">{{ error }}</UiStatus>
       <UiStatus v-else-if="!posts.length" tone="muted">{{ t("feed.emptyPosts") }}</UiStatus>
 
@@ -239,6 +241,7 @@ onMounted(async () => {
           <div>
             <div class="feed-author">
               <strong>{{ post.authorName || t("feed.anonymousUser") }}</strong>
+              <EmotionBadge target-type="post" :target-id="post.postId" />
               <span v-if="post.anonymous" class="tag">{{ t("feed.tagAnonymous") }}</span>
               <span v-if="post.mine" class="tag mine">{{ t("feed.tagMine") }}</span>
             </div>
@@ -327,9 +330,12 @@ onMounted(async () => {
             </UiButton>
           </div>
 
-          <UiStatus v-if="feedStore.commentLoadingByPost[post.postId]" tone="muted">{{
-            t("feed.loadingComments")
-          }}</UiStatus>
+          <UiLoadingState
+            v-if="feedStore.commentLoadingByPost[post.postId]"
+            variant="inline"
+            :size="72"
+            :label="t('feed.loadingComments')"
+          />
           <UiStatus v-else-if="!(feedStore.commentsByPost[post.postId] || []).length" tone="muted">{{
             t("feed.noComments")
           }}</UiStatus>

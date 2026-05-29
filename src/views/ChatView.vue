@@ -7,6 +7,7 @@ import UiButton from "@/components/ui/UiButton.vue";
 import UiCard from "@/components/ui/UiCard.vue";
 import UiInput from "@/components/ui/UiInput.vue";
 import UiStatus from "@/components/ui/UiStatus.vue";
+import UiLoadingState from "@/components/ui/UiLoadingState.vue";
 import { useChatStore } from "@/stores/chat";
 
 const chatStore = useChatStore();
@@ -151,7 +152,8 @@ onUnmounted(() => {
       </div>
 
       <UiStatus v-if="error" tone="error">{{ error }}</UiStatus>
-      <div v-if="!conversations.length" class="empty-tip">{{ t("chat.emptyConversation") }}</div>
+      <UiLoadingState v-else-if="loading && !conversations.length" :label="t('chat.loading')" />
+      <div v-else-if="!conversations.length" class="empty-tip">{{ t("chat.emptyConversation") }}</div>
       <ul class="conversation-list">
         <li v-for="item in conversations" :key="item.conversationId">
           <button

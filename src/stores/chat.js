@@ -10,6 +10,7 @@ import { fetchDiscoverUsers } from "@/api/modules/user";
 import { wsClient } from "@/api/ws-client";
 import { useAuthStore } from "./auth";
 import { normalizeErrorMessage } from "@/utils/error";
+import { i18n } from "@/i18n";
 
 function toMillis(value) {
   if (!value) {
@@ -86,9 +87,18 @@ export const useChatStore = defineStore("chat", {
       if (!payload?.type) {
         return;
       }
-      this.connected = payload.type === "open";
-      if (payload.type === "close") {
+      if (payload.type === "open") {
+        this.connected = true;
+        this.error = null;
+        return;
+      }
+      if (payload.type === "close" || payload.type === "error") {
         this.connected = false;
+        return;
+      }
+      if (payload.type === "reconnect_exhausted") {
+        this.connected = false;
+        this.error = i18n.global.t("chat.reconnectExhausted");
       }
     },
 
