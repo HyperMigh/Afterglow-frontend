@@ -4,6 +4,7 @@ import { computed, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useThemeStore } from "@/stores/theme";
 import { useI18n } from "@/composables/useI18n";
+import { useAppNavigation } from "@/composables/useAppNavigation";
 import UiToastHost from "@/components/ui/UiToastHost.vue";
 import MarketingLayout from "@/layouts/MarketingLayout.vue";
 
@@ -11,18 +12,10 @@ const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const route = useRoute();
 const { t, locale, isEnglish, toggleLocale } = useI18n();
+const { primaryNavLinks } = useAppNavigation();
 
 const isAuthLayout = computed(() => route.meta.layout === "auth");
 const isMarketingLayout = computed(() => route.meta.layout === "marketing");
-
-/** 顶栏固定：产品 / 方案 / 定价 / 文档 / 路线图（与营销站一致） */
-const primaryNavLinks = computed(() => [
-  { label: t("app.links.product"), to: { path: "/", hash: "#product" } },
-  { label: t("app.links.solutions"), to: { path: "/", hash: "#solutions" } },
-  { label: t("app.links.pricing"), to: { path: "/", hash: "#pricing" } },
-  { label: t("app.links.docs"), to: { path: "/", hash: "#docs" } },
-  { label: t("app.links.roadmap"), to: { name: "roadmap" } }
-]);
 const localeToggleLabel = computed(() => (isEnglish.value ? "中" : "EN"));
 const localeToggleAriaLabel = computed(() =>
   isEnglish.value ? t("app.localeSwitchToChinese") : t("app.localeSwitchToEnglish")

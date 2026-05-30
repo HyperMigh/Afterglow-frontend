@@ -1,16 +1,11 @@
 export const messages = {
   zh: {
     app: {
-      brandSubtitle: "产品平台",
+      brandSubtitle: "余温",
       links: {
-        product: "产品",
-        solutions: "方案",
-        pricing: "定价",
-        docs: "文档",
         feed: "社区",
         chat: "私聊",
         mirror: "静一下",
-        roadmap: "路线图",
         home: "首页"
       },
       themeToggle: "切换主题",
@@ -26,8 +21,10 @@ export const messages = {
     },
     home: {
       heroKicker: "Afterglow",
-      heroTitle: "用清晰协作构建更好的产品",
-      heroSubtitle: "Afterglow 帮助团队把反馈、讨论和决策组织成可靠的执行路径。",
+      heroTitle: "把情绪与表达安放下来",
+      heroSubtitle: "社区、私聊与「静一下」——在一个地方记录与回应你真实的声音。",
+      modulesTitle: "三个空间",
+      modulesSubtitle: "按你需要的方式连接、倾诉或稍作停顿。",
       primaryCtaWorkspace: "进入工作台",
       primaryCtaGetStarted: "立即开始",
       docsCta: "查看文档",
@@ -167,7 +164,7 @@ export const messages = {
       ]
     },
     authPortal: {
-      brandSubtitle: "产品平台",
+      brandSubtitle: "余温",
       backHome: "返回主页面",
       modeAriaLabel: "认证模式",
       loginTab: "登录",
@@ -324,16 +321,11 @@ export const messages = {
   },
   en: {
     app: {
-      brandSubtitle: "Product Platform",
+      brandSubtitle: "Afterglow",
       links: {
-        product: "Product",
-        solutions: "Solutions",
-        pricing: "Pricing",
-        docs: "Docs",
         feed: "Feed",
         chat: "Chat",
         mirror: "Mirror",
-        roadmap: "Roadmap",
         home: "Home"
       },
       themeToggle: "Toggle theme",
@@ -349,9 +341,10 @@ export const messages = {
     },
     home: {
       heroKicker: "Afterglow",
-      heroTitle: "Build Better Products With Clarity.",
-      heroSubtitle:
-        "Afterglow helps teams organize feedback, conversations, and decisions into clean and trustworthy execution.",
+      heroTitle: "A place for how you feel and what you say",
+      heroSubtitle: "Feed, chat, and Mirror — connect, talk, or pause in one calm space.",
+      modulesTitle: "Three spaces",
+      modulesSubtitle: "Connect, share, or take a quiet moment — your way.",
       primaryCtaWorkspace: "Open Workspace",
       primaryCtaGetStarted: "Get Started",
       docsCta: "View Docs",

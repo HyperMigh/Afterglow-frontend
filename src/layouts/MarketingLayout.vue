@@ -1,11 +1,12 @@
 <script setup>
-import { RouterLink } from "vue-router";
 import { computed } from "vue";
+import { RouterLink } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "@/stores/auth";
 import { useThemeStore } from "@/stores/theme";
 import { useI18n } from "@/composables/useI18n";
 import { useMobanAssets, mobanAsset } from "@/composables/useMobanAssets";
+import { useAppNavigation } from "@/composables/useAppNavigation";
 
 useMobanAssets();
 
@@ -13,19 +14,12 @@ const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const { isAuthenticated } = storeToRefs(authStore);
 const { t, isEnglish, toggleLocale } = useI18n();
+const { primaryNavLinks: navLinks } = useAppNavigation();
 
 const logoMain = mobanAsset("static/picture/logo.webp");
 const logoScroll = mobanAsset("static/picture/logo-black.webp");
 const logoFooter = mobanAsset("static/picture/logo-black.webp");
 const flowersFooter = mobanAsset("static/picture/flowers-crop-3.webp");
-
-const navLinks = computed(() => [
-  { label: t("app.links.product"), to: { path: "/", hash: "#product" } },
-  { label: t("app.links.solutions"), to: { path: "/", hash: "#solutions" } },
-  { label: t("app.links.pricing"), to: { path: "/", hash: "#pricing" } },
-  { label: t("app.links.docs"), to: { path: "/", hash: "#docs" } },
-  { label: t("app.links.roadmap"), to: { name: "roadmap" } }
-]);
 
 const localeToggleLabel = computed(() => (isEnglish.value ? "中" : "EN"));
 const localeToggleAriaLabel = computed(() =>
@@ -51,7 +45,9 @@ const workspaceCtaLabel = computed(() =>
                     <a href="#"><i class="icofont-location-pin" />{{ t("home.marketing.topbarLocation") }}</a>
                   </div>
                   <div class="topbar-widget">
-                    <a href="#"><i class="icofont-clock-time" /><span>{{ t("home.marketing.topbarHours") }}</span></a>
+                    <a href="#"
+                      ><i class="icofont-clock-time" /><span>{{ t("home.marketing.topbarHours") }}</span></a
+                    >
                   </div>
                   <div class="topbar-widget">
                     <a href="#"><i class="icofont-envelope" />{{ t("home.marketing.topbarEmail") }}</a>
@@ -101,8 +97,12 @@ const workspaceCtaLabel = computed(() =>
                   >
                     {{ localeToggleLabel }}
                   </button>
-                  <RouterLink v-if="!isAuthenticated" to="/login" class="btn-line me-2">{{ t("app.auth.login") }}</RouterLink>
-                  <RouterLink :to="workspaceCta" class="btn-main d-xl-block d-md-none">{{ workspaceCtaLabel }}</RouterLink>
+                  <RouterLink v-if="!isAuthenticated" to="/login" class="btn-line me-2">{{
+                    t("app.auth.login")
+                  }}</RouterLink>
+                  <RouterLink :to="workspaceCta" class="btn-main d-xl-block d-md-none">{{
+                    workspaceCtaLabel
+                  }}</RouterLink>
                   <span id="menu-btn" />
                 </div>
               </div>
@@ -130,9 +130,15 @@ const workspaceCtaLabel = computed(() =>
                 <div class="widget">
                   <h5>{{ t("home.marketing.footerProductTitle") }}</h5>
                   <ul>
-                    <li><RouterLink to="/feed">{{ t("app.auth.workspace") }}</RouterLink></li>
-                    <li><RouterLink :to="{ path: '/', hash: '#product' }">{{ t("app.links.product") }}</RouterLink></li>
-                    <li><RouterLink :to="{ path: '/', hash: '#pricing' }">{{ t("app.links.pricing") }}</RouterLink></li>
+                    <li>
+                      <RouterLink to="/feed">{{ t("app.links.feed") }}</RouterLink>
+                    </li>
+                    <li>
+                      <RouterLink to="/chat">{{ t("app.links.chat") }}</RouterLink>
+                    </li>
+                    <li>
+                      <RouterLink to="/mirror">{{ t("app.links.mirror") }}</RouterLink>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -140,9 +146,12 @@ const workspaceCtaLabel = computed(() =>
                 <div class="widget">
                   <h5>{{ t("home.marketing.footerLinksTitle") }}</h5>
                   <ul>
-                    <li><RouterLink to="/login">{{ t("app.auth.login") }}</RouterLink></li>
-                    <li><RouterLink to="/register">{{ t("app.auth.getStarted") }}</RouterLink></li>
-                    <li><RouterLink to="/roadmap">{{ t("home.marketing.roadmap") }}</RouterLink></li>
+                    <li>
+                      <RouterLink to="/login">{{ t("app.auth.login") }}</RouterLink>
+                    </li>
+                    <li>
+                      <RouterLink to="/register">{{ t("app.auth.getStarted") }}</RouterLink>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -168,7 +177,9 @@ const workspaceCtaLabel = computed(() =>
           <div class="row">
             <div class="col-md-12">
               <div class="de-flex">
-                <div class="de-flex-col">© {{ new Date().getFullYear() }} Afterglow · {{ t("home.footerTagline") }}</div>
+                <div class="de-flex-col">
+                  © {{ new Date().getFullYear() }} Afterglow · {{ t("home.footerTagline") }}
+                </div>
               </div>
             </div>
           </div>
